@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useQuery } from '@tanstack/react-query';
 import { meetingsApi } from '@/lib/api/meetings';
-import { adminApi, type Banner, type CategoryEntity } from '@/lib/api/admin';
+import { adminApi, type Banner, type CategoryEntity, type PageSection } from '@/lib/api/admin';
 import { MeetingCard } from '@/components/meeting/meeting-card';
 import { Button } from '@/components/ui/button';
 import type { Meeting, PaginatedResponse } from '@/types';
@@ -18,7 +18,23 @@ const DEFAULT_CATEGORIES = [
   { key: 'STUDY', label: '스터디', icon: '📚', color: 'bg-yellow-500' },
 ];
 
+interface HeroLayout {
+  subtitle?: string;
+  buttonText?: string;
+  buttonLink?: string;
+  secondButtonText?: string;
+  secondButtonLink?: string;
+  bgColor?: string;
+  bgColorEnd?: string;
+  bgImage?: string;
+}
+
 export default function HomePage() {
+  const { data: sections } = useQuery<PageSection[]>({
+    queryKey: ['public', 'sections'],
+    queryFn: () => adminApi.getPublicSections(),
+  });
+
   const { data: banners } = useQuery<Banner[]>({
     queryKey: ['public', 'banners'],
     queryFn: () => adminApi.getPublicBanners(),
@@ -39,12 +55,15 @@ export default function HomePage() {
     queryFn: () => meetingsApi.getAll({ limit: 4, sort: 'popular', status: 'RECRUITING' }),
   });
 
+  const heroSection = sections?.find((s) => s.type === 'hero');
+  const heroLayout = (heroSection?.layoutJson || {}) as HeroLayout;
+
   const categories = adminCategories?.length
     ? adminCategories.map((cat) => ({
         key: cat.name.toUpperCase(),
         label: cat.name,
         icon: cat.icon || '📌',
-        color: cat.color || 'bg-gray-500',
+        color: cat.color || null,
       }))
     : DEFAULT_CATEGORIES;
 
@@ -74,15 +93,30 @@ export default function HomePage() {
       )}
 
       {/* Hero Section */}
-      <section className="mb-12 rounded-2xl bg-gradient-to-r from-primary-600 to-primary-800 p-8 text-white md:p-12">
-        <h1 className="mb-4 text-3xl font-bold md:text-4xl">관심사가 같은 사람들과 함께해요</h1>
-        <p className="mb-6 text-lg opacity-90">운동, 게임, 맛집, 여행... 다양한 모임에서 새로운 친구를 만나보세요</p>
+      <section
+        className="mb-12 rounded-2xl p-8 text-white md:p-12"
+        style={{
+          background: heroLayout.bgImage
+            ? `url(${heroLayout.bgImage}) center/cover`
+            : `linear-gradient(to right, ${heroLayout.bgColor || '#4f46e5'}, ${heroLayout.bgColorEnd || '#7c3aed'})`,
+        }}
+      >
+        <h1 className="mb-4 text-3xl font-bold md:text-4xl">
+          {heroSection?.title || '관심사가 같은 사람들과 함께해요'}
+        </h1>
+        <p className="mb-6 text-lg opacity-90">
+          {heroLayout.subtitle || '운동, 게임, 맛집, 여행... 다양한 모임에서 새로운 친구를 만나보세요'}
+        </p>
         <div className="flex gap-3">
-          <Link href="/meetings">
-            <Button className="bg-white text-primary-600 hover:bg-gray-100">모임 찾아보기</Button>
+          <Link href={heroLayout.buttonLink || '/meetings'}>
+            <Button className="bg-white text-primary-600 hover:bg-gray-100">
+              {heroLayout.buttonText || '모임 찾아보기'}
+            </Button>
           </Link>
-          <Link href="/meetings/create">
-            <Button className="border-2 border-white bg-transparent text-white hover:bg-white/20">모임 만들기</Button>
+          <Link href={heroLayout.secondButtonLink || '/meetings/create'}>
+            <Button className="border-2 border-white bg-transparent text-white hover:bg-white/20">
+              {heroLayout.secondButtonText || '모임 만들기'}
+            </Button>
           </Link>
         </div>
       </section>
@@ -91,18 +125,24 @@ export default function HomePage() {
       <section className="mb-12">
         <h2 className="mb-6 text-2xl font-bold">카테고리</h2>
         <div className="grid grid-cols-3 gap-4 md:grid-cols-6">
-          {categories.map((cat) => (
-            <Link
-              key={cat.key}
-              href={`/meetings?category=${cat.key}`}
-              className="flex flex-col items-center gap-2 rounded-xl bg-white p-4 shadow-sm transition hover:shadow-md"
-            >
-              <div className={`flex h-12 w-12 items-center justify-center rounded-full ${cat.color} text-2xl`}>
-                {cat.icon}
-              </div>
-              <span className="text-sm font-medium">{cat.label}</span>
-            </Link>
-          ))}
+          {categories.map((cat) => {
+            const isHexColor = cat.color?.startsWith('#');
+            return (
+              <Link
+                key={cat.key}
+                href={`/meetings?category=${cat.key}`}
+                className="flex flex-col items-center gap-2 rounded-xl bg-white p-4 shadow-sm transition hover:shadow-md"
+              >
+                <div
+                  className={`flex h-12 w-12 items-center justify-center rounded-full text-2xl ${!isHexColor && cat.color ? cat.color : ''}`}
+                  style={isHexColor ? { backgroundColor: cat.color } : undefined}
+                >
+                  {cat.icon}
+                </div>
+                <span className="text-sm font-medium">{cat.label}</span>
+              </Link>
+            );
+          })}
         </div>
       </section>
 

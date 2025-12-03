@@ -120,6 +120,41 @@ async function seedCategories() {
   console.log('  - Categories added');
 }
 
+async function seedSections() {
+  console.log('Seeding sections...');
+  const sections = [
+    { type: 'banner', title: '배너', order: 1, isActive: true, layoutJson: {} },
+    { type: 'hero', title: '관심사가 같은 사람들과 함께해요', order: 2, isActive: true, layoutJson: {} },
+    { type: 'categories', title: '카테고리', order: 3, isActive: true, layoutJson: {} },
+    { type: 'meetings', title: '인기 모임', order: 4, isActive: true, layoutJson: { sort: 'popular', limit: 4 } },
+    { type: 'meetings', title: '최신 모임', order: 5, isActive: true, layoutJson: { sort: 'latest', limit: 4 } },
+    { type: 'featured', title: '나만의 모임을 시작해보세요', order: 6, isActive: true, layoutJson: {} },
+  ];
+  for (const s of sections) {
+    const existing = await prisma.pageSection.findFirst({ where: { type: s.type, title: s.title } });
+    if (!existing) {
+      await prisma.pageSection.create({ data: s });
+    }
+  }
+  console.log('  - Sections added');
+}
+
+async function seedBanners() {
+  console.log('Seeding banners...');
+  const banners = [
+    { imageUrl: 'https://picsum.photos/seed/banner1/800/450', linkUrl: '/meetings', order: 1, isActive: true },
+    { imageUrl: 'https://picsum.photos/seed/banner2/800/450', linkUrl: '/meetings?sort=popular', order: 2, isActive: true },
+    { imageUrl: 'https://picsum.photos/seed/banner3/800/450', linkUrl: '/meetings/create', order: 3, isActive: true },
+  ];
+  const existingCount = await prisma.banner.count();
+  if (existingCount === 0) {
+    for (const b of banners) {
+      await prisma.banner.create({ data: b });
+    }
+  }
+  console.log('  - Banners added');
+}
+
 async function main() {
   console.log('Starting seed...\n');
   const users = await seedUsers();
@@ -127,6 +162,8 @@ async function main() {
   await seedParticipants(users, meetings);
   await seedReviews(users, meetings);
   await seedCategories();
+  await seedSections();
+  await seedBanners();
   console.log('\nSeed completed!');
 }
 

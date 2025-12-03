@@ -10,14 +10,14 @@ import { Input } from '@/components/ui/input';
 
 const ICON_OPTIONS = ['⚽', '🎮', '🍔', '🎨', '✈️', '📚', '🎬', '🎵', '💼', '🏠', '❤️', '🎯'];
 const COLOR_OPTIONS = [
-  { value: 'bg-red-500', label: '빨강' },
-  { value: 'bg-orange-500', label: '주황' },
-  { value: 'bg-yellow-500', label: '노랑' },
-  { value: 'bg-green-500', label: '초록' },
-  { value: 'bg-blue-500', label: '파랑' },
-  { value: 'bg-purple-500', label: '보라' },
-  { value: 'bg-pink-500', label: '분홍' },
-  { value: 'bg-gray-500', label: '회색' },
+  { value: '#ef4444', label: '빨강' },
+  { value: '#f97316', label: '주황' },
+  { value: '#eab308', label: '노랑' },
+  { value: '#22c55e', label: '초록' },
+  { value: '#3b82f6', label: '파랑' },
+  { value: '#8b5cf6', label: '보라' },
+  { value: '#ec4899', label: '분홍' },
+  { value: '#6b7280', label: '회색' },
 ];
 
 export default function AdminCategoriesPage() {
@@ -62,14 +62,21 @@ export default function AdminCategoriesPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-categories'] }),
   });
 
-  const resetForm = () => setFormData({ name: '', icon: '⚽', color: 'bg-blue-500', order: 0, isActive: true });
+  const resetForm = () => setFormData({ name: '', icon: '⚽', color: '#3b82f6', order: 0, isActive: true });
 
   const handleCreate = () => {
     createMutation.mutate(formData);
   };
 
   const handleUpdate = (id: string) => {
-    updateMutation.mutate({ id, data: formData });
+    updateMutation.mutate({
+      id,
+      data: {
+        ...formData,
+        color: formData.color || null,
+        icon: formData.icon || null,
+      },
+    });
   };
 
   const startEdit = (category: CategoryEntity) => {
@@ -77,7 +84,7 @@ export default function AdminCategoriesPage() {
     setFormData({
       name: category.name,
       icon: category.icon || '⚽',
-      color: category.color || 'bg-blue-500',
+      color: category.color || '',
       order: category.order,
       isActive: category.isActive,
     });
@@ -134,10 +141,11 @@ export default function AdminCategoriesPage() {
                   <button
                     key={color.value}
                     type="button"
-                    onClick={() => setFormData((p) => ({ ...p, color: color.value }))}
-                    className={`h-10 w-10 rounded-lg ${color.value} ${
+                    onClick={() => setFormData((p) => ({ ...p, color: p.color === color.value ? '' : color.value }))}
+                    className={`h-10 w-10 rounded-lg ${
                       formData.color === color.value ? 'ring-2 ring-offset-2 ring-gray-900' : ''
                     }`}
+                    style={{ backgroundColor: color.value }}
                     title={color.label}
                   />
                 ))}
@@ -207,10 +215,11 @@ export default function AdminCategoriesPage() {
                         <button
                           key={color.value}
                           type="button"
-                          onClick={() => setFormData((p) => ({ ...p, color: color.value }))}
-                          className={`h-6 w-6 rounded ${color.value} ${
+                          onClick={() => setFormData((p) => ({ ...p, color: p.color === color.value ? '' : color.value }))}
+                          className={`h-6 w-6 rounded ${
                             formData.color === color.value ? 'ring-2 ring-offset-1 ring-gray-900' : ''
                           }`}
+                          style={{ backgroundColor: color.value }}
                         />
                       ))}
                     </div>
@@ -232,17 +241,18 @@ export default function AdminCategoriesPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${category.color || 'bg-gray-200'} text-2xl`}>
-                        {category.icon || '?'}
-                      </div>
-                      <div>
-                        <p className="font-medium">{category.name}</p>
-                        {!category.isActive && <span className="text-xs text-gray-500">(비활성)</span>}
-                      </div>
+                  <div className="flex items-center">
+                    <div
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-xl"
+                      style={category.color ? { backgroundColor: category.color } : undefined}
+                    >
+                      {category.icon || '?'}
                     </div>
-                    <div className="flex gap-1">
+                    <div className="ml-3 flex-1">
+                      <p className="font-medium">{category.name}</p>
+                      {!category.isActive && <span className="text-xs text-gray-500">(비활성)</span>}
+                    </div>
+                    <div className="flex shrink-0 gap-1">
                       <Button size="sm" variant="outline" onClick={() => startEdit(category)}>
                         수정
                       </Button>
