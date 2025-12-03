@@ -45,12 +45,13 @@
         "description": "podman-compose.yml 작성, PostgreSQL, Redis, Backend, Frontend 컨테이너 설정",
         "details": "",
         "testStrategy": "",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           "1"
         ],
         "priority": "high",
-        "subtasks": []
+        "subtasks": [],
+        "updatedAt": "2025-12-03T12:04:05.923Z"
       },
       {
         "id": "5",
@@ -58,13 +59,70 @@
         "description": "회원가입, 로그인, JWT, httpOnly 쿠키, 토큰 블랙리스트 구현",
         "details": "",
         "testStrategy": "",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           "1",
           "2"
         ],
         "priority": "high",
-        "subtasks": []
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "JWT 전략 및 Guards 설정",
+            "description": "passport-jwt 전략, JwtAuthGuard, RolesGuard 구현",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 5,
+            "parentId": "undefined",
+            "updatedAt": "2025-12-03T12:10:32.387Z"
+          },
+          {
+            "id": 2,
+            "title": "회원가입 API 구현",
+            "description": "bcrypt 비밀번호 해싱, 이메일/닉네임 중복 체크, DTO 검증",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 5,
+            "parentId": "undefined",
+            "updatedAt": "2025-12-03T12:10:32.388Z"
+          },
+          {
+            "id": 3,
+            "title": "로그인 API 구현",
+            "description": "JWT Access/Refresh 토큰 발급, httpOnly 쿠키 설정",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 5,
+            "parentId": "undefined",
+            "updatedAt": "2025-12-03T12:10:32.389Z"
+          },
+          {
+            "id": 4,
+            "title": "로그아웃 및 토큰 블랙리스트",
+            "description": "로그아웃 시 토큰 블랙리스트에 추가, 쿠키 삭제",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 5,
+            "parentId": "undefined",
+            "updatedAt": "2025-12-03T12:10:32.389Z"
+          },
+          {
+            "id": 5,
+            "title": "토큰 갱신 API",
+            "description": "Refresh Token으로 Access Token 재발급",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 5,
+            "parentId": "undefined",
+            "updatedAt": "2025-12-03T12:10:32.390Z"
+          }
+        ],
+        "updatedAt": "2025-12-03T12:10:32.390Z"
       },
       {
         "id": "6",
@@ -82,9 +140,9 @@
     ],
     "metadata": {
       "version": "1.0.0",
-      "lastModified": "2025-12-03T12:02:02.125Z",
+      "lastModified": "2025-12-03T12:10:32.390Z",
       "taskCount": 6,
-      "completedCount": 3,
+      "completedCount": 5,
       "tags": [
         "master"
       ]

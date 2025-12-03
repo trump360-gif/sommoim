@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
+import * as cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -12,6 +13,9 @@ async function bootstrap() {
 
   // 보안 헤더
   app.use(helmet());
+
+  // 쿠키 파서
+  app.use(cookieParser());
 
   // CORS 설정
   app.enableCors({
