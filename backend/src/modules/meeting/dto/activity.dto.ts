@@ -1,5 +1,6 @@
-import { IsString, IsOptional, IsDateString, IsArray, ValidateNested, IsNumber } from 'class-validator';
+import { IsString, IsOptional, IsDateString, IsArray, ValidateNested, IsNumber, IsEnum } from 'class-validator';
 import { Type } from 'class-transformer';
+import { AttendanceStatus } from '@prisma/client';
 
 export class CreateActivityDto {
   @IsString()
@@ -11,6 +12,10 @@ export class CreateActivityDto {
 
   @IsDateString()
   date: string;
+
+  @IsDateString()
+  @IsOptional()
+  endTime?: string;
 
   @IsString()
   @IsOptional()
@@ -59,4 +64,19 @@ export class AddActivityImagesDto {
   @ValidateNested({ each: true })
   @Type(() => ActivityImageDto)
   images: ActivityImageDto[];
+}
+
+export class UpdateAttendanceDto {
+  @IsEnum(AttendanceStatus)
+  status: AttendanceStatus;
+}
+
+export class CalendarQueryDto {
+  @IsDateString()
+  @IsOptional()
+  startDate?: string;
+
+  @IsDateString()
+  @IsOptional()
+  endDate?: string;
 }

@@ -404,9 +404,11 @@ model MeetingActivity {
   title       String
   description String?
   date        DateTime
+  endTime     DateTime?  // 활동 종료 시간 (일정 충돌 체크용)
   location    String?
 
   images      ActivityImage[]
+  attendances ActivityAttendance[]
 
   createdById String
   createdAt   DateTime @default(now())
@@ -414,6 +416,33 @@ model MeetingActivity {
 
   @@index([meetingId])
   @@index([date])
+}
+
+// ========== 활동 참석 ==========
+
+model ActivityAttendance {
+  id          String           @id @default(cuid())
+  activityId  String
+  activity    MeetingActivity  @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  userId      String
+
+  status      AttendanceStatus @default(PENDING)
+  respondedAt DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([activityId, userId])
+  @@index([activityId])
+  @@index([userId])
+  @@index([status])
+}
+
+enum AttendanceStatus {
+  PENDING       // 미응답
+  ATTENDING     // 참석
+  NOT_ATTENDING // 불참
+  MAYBE         // 미정
 }
 
 model ActivityImage {

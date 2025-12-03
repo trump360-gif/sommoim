@@ -5,8 +5,8 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CreateMeetingDto, UpdateMeetingDto, MeetingQueryDto, SortOrder, CreateActivityDto, UpdateActivityDto, AddActivityImagesDto } from './dto';
-import { MeetingStatus, Prisma, ParticipantStatus } from '@prisma/client';
+import { CreateMeetingDto, UpdateMeetingDto, MeetingQueryDto, SortOrder, CreateActivityDto, UpdateActivityDto, AddActivityImagesDto, UpdateAttendanceDto, CalendarQueryDto } from './dto';
+import { MeetingStatus, Prisma, ParticipantStatus, AttendanceStatus } from '@prisma/client';
 
 @Injectable()
 export class MeetingService {
@@ -410,5 +410,165 @@ export class MeetingService {
     if (!participant) throw new ForbiddenException('권한이 없습니다');
 
     return meeting;
+  }
+
+  // ========== 활동 참석 ==========
+
+  async updateAttendance(activityId: string, userId: string, dto: UpdateAttendanceDto) {
+    const activity = await this.findActivityWithMeeting(activityId);
+    await this.validateParticipantOrHost(activity.meetingId, userId);
+
+    // 일정 충돌 체크 (참석으로 변경하는 경우)
+    if (dto.status === AttendanceStatus.ATTENDING) {
+      const conflicts = await this.checkScheduleConflicts(userId, activity.date, activity.endTime, activityId);
+      if (conflicts.length > 0) {
+        return {
+          hasConflict: true,
+          conflicts,
+          message: '같은 시간에 다른 일정이 있습니다. 그래도 참석하시겠습니까?',
+        };
+      }
+    }
+
+    const attendance = await this.prisma.activityAttendance.upsert({
+      where: { activityId_userId: { activityId, userId } },
+      create: { activityId, userId, status: dto.status, respondedAt: new Date() },
+      update: { status: dto.status, respondedAt: new Date() },
+      include: {
+        activity: { select: { id: true, title: true, date: true, meeting: { select: { id: true, title: true } } } },
+      },
+    });
+
+    return { hasConflict: false, attendance };
+  }
+
+  async getActivityAttendances(activityId: string) {
+    const activity = await this.prisma.meetingActivity.findUnique({ where: { id: activityId } });
+    if (!activity) throw new NotFoundException('활동을 찾을 수 없습니다');
+
+    return this.prisma.activityAttendance.findMany({
+      where: { activityId },
+      include: {
+        activity: { select: { id: true, title: true, date: true } },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  async getMyAttendance(activityId: string, userId: string) {
+    return this.prisma.activityAttendance.findUnique({
+      where: { activityId_userId: { activityId, userId } },
+    });
+  }
+
+  // ========== 내 캘린더 일정 ==========
+
+  async getMyCalendarEvents(userId: string, query: CalendarQueryDto) {
+    const { startDate, endDate } = query;
+
+    // 기본값: 이번 달
+    const start = startDate ? new Date(startDate) : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    const end = endDate ? new Date(endDate) : new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0, 23, 59, 59);
+
+    // 참석으로 응답한 활동들만 조회
+    const attendances = await this.prisma.activityAttendance.findMany({
+      where: {
+        userId,
+        status: AttendanceStatus.ATTENDING,
+        activity: {
+          date: { gte: start, lte: end },
+        },
+      },
+      include: {
+        activity: {
+          include: {
+            meeting: { select: { id: true, title: true, category: true, imageUrl: true } },
+          },
+        },
+      },
+      orderBy: { activity: { date: 'asc' } },
+    });
+
+    return attendances.map((att) => ({
+      id: att.activity.id,
+      title: att.activity.title,
+      description: att.activity.description,
+      date: att.activity.date,
+      endTime: att.activity.endTime,
+      location: att.activity.location,
+      meeting: att.activity.meeting,
+      attendanceStatus: att.status,
+    }));
+  }
+
+  async checkScheduleConflicts(
+    userId: string,
+    date: Date,
+    endTime: Date | null,
+    excludeActivityId?: string,
+  ) {
+    const activityStart = new Date(date);
+    const activityEnd = endTime ? new Date(endTime) : new Date(activityStart.getTime() + 2 * 60 * 60 * 1000); // 기본 2시간
+
+    const conflictingAttendances = await this.prisma.activityAttendance.findMany({
+      where: {
+        userId,
+        status: AttendanceStatus.ATTENDING,
+        activityId: excludeActivityId ? { not: excludeActivityId } : undefined,
+        activity: {
+          OR: [
+            // 기존 일정이 새 일정 시작 전에 시작하고 새 일정 시작 후에 끝남
+            {
+              date: { lte: activityStart },
+              endTime: { gt: activityStart },
+            },
+            // 기존 일정이 새 일정 종료 전에 시작하고 새 일정 종료 후에 끝남
+            {
+              date: { lt: activityEnd },
+              endTime: { gte: activityEnd },
+            },
+            // 기존 일정이 새 일정 범위 안에 있음
+            {
+              date: { gte: activityStart, lt: activityEnd },
+            },
+            // endTime이 null인 경우 date 기준으로 같은 날 체크
+            {
+              endTime: null,
+              date: {
+                gte: new Date(activityStart.toDateString()),
+                lt: new Date(new Date(activityStart.toDateString()).getTime() + 24 * 60 * 60 * 1000),
+              },
+            },
+          ],
+        },
+      },
+      include: {
+        activity: {
+          include: {
+            meeting: { select: { id: true, title: true } },
+          },
+        },
+      },
+    });
+
+    return conflictingAttendances.map((att) => ({
+      activityId: att.activity.id,
+      activityTitle: att.activity.title,
+      meetingTitle: att.activity.meeting.title,
+      date: att.activity.date,
+      endTime: att.activity.endTime,
+    }));
+  }
+
+  private async validateParticipantOrHost(meetingId: string, userId: string) {
+    const meeting = await this.prisma.meeting.findFirst({ where: { id: meetingId, deletedAt: null } });
+    if (!meeting) throw new NotFoundException('모임을 찾을 수 없습니다');
+
+    if (meeting.hostId === userId) return;
+
+    const participant = await this.prisma.participant.findUnique({
+      where: { meetingId_userId: { meetingId, userId }, status: 'APPROVED' },
+    });
+    if (!participant) throw new ForbiddenException('모임 멤버만 참석 여부를 변경할 수 있습니다');
   }
 }

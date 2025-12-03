@@ -11,7 +11,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { MeetingService } from './meeting.service';
-import { CreateMeetingDto, UpdateMeetingDto, MeetingQueryDto, CreateScheduleDto, CreateActivityDto, UpdateActivityDto, AddActivityImagesDto } from './dto';
+import { CreateMeetingDto, UpdateMeetingDto, MeetingQueryDto, CreateScheduleDto, CreateActivityDto, UpdateActivityDto, AddActivityImagesDto, UpdateAttendanceDto, CalendarQueryDto } from './dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 
@@ -129,5 +129,25 @@ export class MeetingController {
   @HttpCode(HttpStatus.NO_CONTENT)
   deleteActivityImage(@Param('imageId') imageId: string, @CurrentUser('id') userId: string) {
     return this.meetingService.deleteActivityImage(imageId, userId);
+  }
+
+  // 활동 참석 관리
+  @Put('activities/:activityId/attendance')
+  updateAttendance(
+    @Param('activityId') activityId: string,
+    @CurrentUser('id') userId: string,
+    @Body() dto: UpdateAttendanceDto,
+  ) {
+    return this.meetingService.updateAttendance(activityId, userId, dto);
+  }
+
+  @Get('activities/:activityId/attendances')
+  getActivityAttendances(@Param('activityId') activityId: string) {
+    return this.meetingService.getActivityAttendances(activityId);
+  }
+
+  @Get('activities/:activityId/my-attendance')
+  getMyAttendance(@Param('activityId') activityId: string, @CurrentUser('id') userId: string) {
+    return this.meetingService.getMyAttendance(activityId, userId);
   }
 }

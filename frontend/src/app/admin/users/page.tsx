@@ -104,7 +104,7 @@ export default function AdminUsersPage() {
       {data?.meta && data.meta.totalPages > 1 && (
         <div className="mt-4 flex justify-center gap-2">
           {Array.from({ length: data.meta.totalPages }, (_, i) => (
-            <Button key={i} size="sm" variant={page === i + 1 ? 'default' : 'outline'} onClick={() => setPage(i + 1)}>{i + 1}</Button>
+            <Button key={i} size="sm" variant={page === i + 1 ? 'primary' : 'outline'} onClick={() => setPage(i + 1)}>{i + 1}</Button>
           ))}
         </div>
       )}
@@ -114,7 +114,7 @@ export default function AdminUsersPage() {
           <p>{selectedUser?.nickname}의 권한을 변경합니다</p>
           <div className="flex gap-2">
             {['USER', 'MODERATOR', 'ADMIN'].map((role) => (
-              <Button key={role} variant={selectedUser?.role === role ? 'default' : 'outline'}
+              <Button key={role} variant={selectedUser?.role === role ? 'primary' : 'outline'}
                 onClick={() => selectedUser && updateRoleMutation.mutate({ id: selectedUser.id, role })}>
                 {role === 'USER' ? '일반' : role === 'MODERATOR' ? '운영자' : '관리자'}
               </Button>

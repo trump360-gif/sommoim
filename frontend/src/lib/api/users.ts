@@ -1,4 +1,5 @@
 import { api } from './client';
+import type { Meeting } from '@/types/meeting';
 
 export interface Profile {
   id: string;
@@ -31,18 +32,6 @@ export interface Participation {
     id: string;
     title: string;
   };
-}
-
-export interface Meeting {
-  id: string;
-  title: string;
-  description: string;
-  location: string;
-  meetingDate: string;
-  maxParticipants: number;
-  imageUrl?: string;
-  host: { id: string; nickname: string };
-  _count?: { participants: number };
 }
 
 export interface BookmarksResponse {

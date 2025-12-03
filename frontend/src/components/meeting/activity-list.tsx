@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { ImageGallery } from './image-gallery';
+import { ActivityAttendance } from './activity-attendance';
 
 interface ActivityListProps {
   meetingId: string;
@@ -182,6 +183,13 @@ export function ActivityList({ meetingId, isHost, isParticipant }: ActivityListP
                       }
                     }}
                   />
+
+                  {/* 참석 여부 섹션 */}
+                  {canCreate && (
+                    <div className="rounded-lg bg-gray-50 p-4">
+                      <ActivityAttendance activityId={activity.id} activityTitle={activity.title} />
+                    </div>
+                  )}
 
                   {canCreate && (
                     <div className="flex gap-2 border-t pt-4">

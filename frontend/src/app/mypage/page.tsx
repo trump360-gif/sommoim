@@ -9,8 +9,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { MeetingCard } from '@/components/meeting/meeting-card';
+import { MyCalendar } from '@/components/calendar/my-calendar';
 
-type Tab = 'profile' | 'participations' | 'bookmarks';
+type Tab = 'profile' | 'calendar' | 'participations' | 'bookmarks';
 
 export default function MyPage() {
   const router = useRouter();
@@ -56,6 +57,7 @@ export default function MyPage() {
 
   const tabs: { key: Tab; label: string }[] = [
     { key: 'profile', label: '프로필' },
+    { key: 'calendar', label: '내 일정' },
     { key: 'participations', label: '참여 모임' },
     { key: 'bookmarks', label: '북마크' },
   ];
@@ -125,6 +127,8 @@ export default function MyPage() {
           </CardContent>
         </Card>
       )}
+
+      {activeTab === 'calendar' && <MyCalendar />}
 
       {activeTab === 'participations' && (
         <div className="space-y-4">

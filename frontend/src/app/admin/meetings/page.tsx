@@ -90,14 +90,14 @@ export default function AdminMeetingsPage() {
       {data?.meta && data.meta.totalPages > 1 && (
         <div className="mt-4 flex justify-center gap-2">
           {Array.from({ length: Math.min(data.meta.totalPages, 10) }, (_, i) => (
-            <Button key={i} size="sm" variant={page === i + 1 ? 'default' : 'outline'} onClick={() => setPage(i + 1)}>{i + 1}</Button>
+            <Button key={i} size="sm" variant={page === i + 1 ? 'primary' : 'outline'} onClick={() => setPage(i + 1)}>{i + 1}</Button>
           ))}
         </div>
       )}
 
       <Modal isOpen={!!selectedMeeting} onClose={() => setSelectedMeeting(null)} title="모임 삭제">
         <div className="space-y-4">
-          <p>"{selectedMeeting?.title}"을(를) 삭제하시겠습니까?</p>
+          <p>&quot;{selectedMeeting?.title}&quot;을(를) 삭제하시겠습니까?</p>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setSelectedMeeting(null)}>취소</Button>
             <Button className="bg-red-600" onClick={() => selectedMeeting && deleteMutation.mutate(selectedMeeting.id)}>삭제</Button>

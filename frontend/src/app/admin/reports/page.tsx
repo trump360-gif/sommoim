@@ -95,7 +95,7 @@ export default function AdminReportsPage() {
       {data?.meta && data.meta.totalPages > 1 && (
         <div className="mt-4 flex justify-center gap-2">
           {Array.from({ length: Math.min(data.meta.totalPages, 10) }, (_, i) => (
-            <Button key={i} size="sm" variant={page === i + 1 ? 'default' : 'outline'} onClick={() => setPage(i + 1)}>{i + 1}</Button>
+            <Button key={i} size="sm" variant={page === i + 1 ? 'primary' : 'outline'} onClick={() => setPage(i + 1)}>{i + 1}</Button>
           ))}
         </div>
       )}
