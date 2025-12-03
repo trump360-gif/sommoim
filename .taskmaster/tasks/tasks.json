@@ -1,0 +1,93 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": "1",
+        "title": "NestJS 백엔드 프로젝트 초기화",
+        "description": "NestJS 프로젝트 구조 설정, 필수 의존성 설치, 기본 모듈 구성",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": [],
+        "updatedAt": "2025-12-03T11:55:53.017Z"
+      },
+      {
+        "id": "2",
+        "title": "Prisma 스키마 작성",
+        "description": "User, Profile, Meeting, MeetingSchedule, Participant, Review, Report, Notification 등 전체 데이터베이스 스키마 작성",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [
+          "1"
+        ],
+        "priority": "high",
+        "subtasks": [],
+        "updatedAt": "2025-12-03T11:57:11.566Z"
+      },
+      {
+        "id": "3",
+        "title": "Next.js 프론트엔드 프로젝트 초기화",
+        "description": "Next.js 14 App Router 프로젝트 생성, TypeScript, Tailwind CSS, React Query, Zustand 설정",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": [],
+        "updatedAt": "2025-12-03T12:02:02.125Z"
+      },
+      {
+        "id": "4",
+        "title": "Podman 컨테이너 설정",
+        "description": "podman-compose.yml 작성, PostgreSQL, Redis, Backend, Frontend 컨테이너 설정",
+        "details": "",
+        "testStrategy": "",
+        "status": "pending",
+        "dependencies": [
+          "1"
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": "5",
+        "title": "Auth 모듈 구현",
+        "description": "회원가입, 로그인, JWT, httpOnly 쿠키, 토큰 블랙리스트 구현",
+        "details": "",
+        "testStrategy": "",
+        "status": "pending",
+        "dependencies": [
+          "1",
+          "2"
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": "6",
+        "title": "500자 규칙 검사 스크립트",
+        "description": "ts-morph 기반 500자 규칙 자동 검사 스크립트 및 CI/CD 설정",
+        "details": "",
+        "testStrategy": "",
+        "status": "pending",
+        "dependencies": [
+          "1"
+        ],
+        "priority": "medium",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "version": "1.0.0",
+      "lastModified": "2025-12-03T12:02:02.125Z",
+      "taskCount": 6,
+      "completedCount": 3,
+      "tags": [
+        "master"
+      ]
+    }
+  }
+}

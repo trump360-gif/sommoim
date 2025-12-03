@@ -1,0 +1,483 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ========== 사용자 ==========
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  nickname  String   @unique
+  role      UserRole @default(USER)
+
+  profile   Profile?
+
+  // 관계
+  hostedMeetings  Meeting[]       @relation("HostedMeetings")
+  participations  Participant[]
+  reviews         Review[]
+  sentReports     Report[]        @relation("ReportSender")
+  receivedReports Report[]        @relation("ReportTarget")
+  blockedUsers    UserBlock[]     @relation("Blocker")
+  blockedBy       UserBlock[]     @relation("Blocked")
+  notifications   Notification[]
+  chatMessages    ChatMessage[]
+  refreshTokens   RefreshToken[]
+  tokenBlacklist  TokenBlacklist[]
+  activityLogs    ActivityLog[]
+
+  // 팔로우
+  followers       Follow[]        @relation("Following")
+  following       Follow[]        @relation("Follower")
+
+  // 북마크
+  bookmarks       Bookmark[]
+
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([email])
+  @@index([deletedAt])
+}
+
+model Profile {
+  id           String  @id @default(cuid())
+  userId       String  @unique
+  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  bio          String?
+  avatarUrl    String?
+  faceImageUrl String?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+enum UserRole {
+  ADMIN
+  MODERATOR
+  USER
+}
+
+// ========== 팔로우 ==========
+
+model Follow {
+  id          String @id @default(cuid())
+  followerId  String
+  followingId String
+
+  follower    User   @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User   @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+// ========== 모임 ==========
+
+model Meeting {
+  id              String        @id @default(cuid())
+  title           String
+  description     String
+  category        Category
+  location        String
+  maxParticipants Int
+  imageUrl        String?
+  status          MeetingStatus @default(RECRUITING)
+  autoApprove     Boolean       @default(false)
+
+  hostId          String
+  host            User          @relation("HostedMeetings", fields: [hostId], references: [id])
+
+  schedules       MeetingSchedule[]
+  participants    Participant[]
+  reviews         Review[]
+  reports         Report[]
+  chatMessages    ChatMessage[]
+  bookmarks       Bookmark[]
+
+  viewCount       Int           @default(0)
+
+  deletedAt       DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([hostId])
+  @@index([category])
+  @@index([status])
+  @@index([deletedAt])
+  @@index([createdAt])
+}
+
+model MeetingSchedule {
+  id          String   @id @default(cuid())
+  meetingId   String
+  meeting     Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  startTime   DateTime
+  endTime     DateTime
+  location    String?
+  note        String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([meetingId])
+  @@index([startTime])
+}
+
+enum Category {
+  SPORTS
+  GAMES
+  FOOD
+  CULTURE
+  TRAVEL
+  STUDY
+}
+
+enum MeetingStatus {
+  DRAFT
+  RECRUITING
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+// ========== 참가 ==========
+
+model Participant {
+  id          String            @id @default(cuid())
+  meetingId   String
+  userId      String
+  status      ParticipantStatus @default(PENDING)
+
+  meeting     Meeting           @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@unique([meetingId, userId])
+  @@index([meetingId])
+  @@index([userId])
+  @@index([status])
+}
+
+enum ParticipantStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+  KICKED
+  ATTENDED
+}
+
+// ========== 리뷰 ==========
+
+model Review {
+  id          String  @id @default(cuid())
+  meetingId   String
+  userId      String
+  rating      Int
+  content     String
+
+  meeting     Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([meetingId, userId])
+  @@index([meetingId])
+  @@index([userId])
+}
+
+// ========== 신고 ==========
+
+model Report {
+  id          String       @id @default(cuid())
+  type        ReportType
+  reason      ReportReason
+  description String?
+  status      ReportStatus @default(PENDING)
+
+  senderId    String
+  sender      User         @relation("ReportSender", fields: [senderId], references: [id])
+
+  targetUserId    String?
+  targetUser      User?    @relation("ReportTarget", fields: [targetUserId], references: [id])
+
+  targetMeetingId String?
+  targetMeeting   Meeting? @relation(fields: [targetMeetingId], references: [id])
+
+  processedAt     DateTime?
+  processedBy     String?
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([senderId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum ReportType {
+  USER
+  MEETING
+}
+
+enum ReportReason {
+  SPAM
+  INAPPROPRIATE
+  ILLEGAL
+  HARASSMENT
+  FRAUD
+  DEFAMATION
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  PROCESSING
+  RESOLVED
+  REJECTED
+}
+
+// ========== 차단 ==========
+
+model UserBlock {
+  id          String @id @default(cuid())
+  blockerId   String
+  blockedId   String
+
+  blocker     User   @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked     User   @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+
+  @@unique([blockerId, blockedId])
+  @@index([blockerId])
+  @@index([blockedId])
+}
+
+// ========== 알림 ==========
+
+model Notification {
+  id        String              @id @default(cuid())
+  userId    String
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type      NotificationType
+  title     String
+  message   String
+  data      Json?
+  priority  NotificationPriority @default(NORMAL)
+
+  isRead    Boolean             @default(false)
+  readAt    DateTime?
+
+  createdAt DateTime            @default(now())
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+enum NotificationType {
+  PARTICIPANT_APPROVED
+  PARTICIPANT_REJECTED
+  SCHEDULE_CHANGED
+  MEETING_CANCELLED
+  NEW_REVIEW
+  REMINDER
+}
+
+enum NotificationPriority {
+  CRITICAL
+  HIGH
+  NORMAL
+  LOW
+}
+
+// ========== 채팅 ==========
+
+model ChatMessage {
+  id          String   @id @default(cuid())
+  meetingId   String
+  userId      String
+  content     String
+
+  meeting     Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  deletedAt   DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([meetingId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// ========== 북마크 ==========
+
+model Bookmark {
+  id        String  @id @default(cuid())
+  userId    String
+  meetingId String
+
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  meeting   Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, meetingId])
+  @@index([userId])
+}
+
+// ========== 관리자 섹션 (layout_json 구조) ==========
+
+model PageSection {
+  id          String  @id @default(cuid())
+  type        String  // hero, featured, categories, banner, meetings
+  title       String?
+  layoutJson  Json    // { "config": { "columns": 3, "showTitle": true, "limit": 6 } }
+  order       Int
+  isActive    Boolean @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([order])
+  @@index([isActive])
+}
+
+model Banner {
+  id          String   @id @default(cuid())
+  imageUrl    String
+  linkUrl     String?
+  order       Int
+  isActive    Boolean  @default(true)
+
+  startDate   DateTime?
+  endDate     DateTime?
+  clickCount  Int      @default(0)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([order])
+  @@index([isActive])
+}
+
+model CategoryEntity {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  icon        String?
+  color       String?
+  order       Int
+  isActive    Boolean @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([order])
+}
+
+// ========== 활동 로그 ==========
+
+model ActivityLog {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+
+  action      String   // CREATE, UPDATE, DELETE
+  entityType  String   // Meeting, User, PageSection, etc.
+  entityId    String
+  beforeData  Json?
+  afterData   Json?
+
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+// ========== 토큰 ==========
+
+model RefreshToken {
+  id         String   @id @default(cuid())
+  tokenHash  String   @unique
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  deviceInfo String?
+  ipAddress  String?
+
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model TokenBlacklist {
+  id        String             @id @default(cuid())
+  jti       String             @unique
+  userId    String
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type      TokenBlacklistType
+  expiresAt DateTime
+  createdAt DateTime           @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+enum TokenBlacklistType {
+  LOGOUT
+  REVOKE
+  PASSWORD_CHANGE
+}
+
+// ========== 시스템 설정 ==========
+
+model SystemSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+
+  updatedAt DateTime @updatedAt
+}
+
+// ========== 파일 업로드 (Presigned URL 추적) ==========
+
+model UploadedFile {
+  id          String   @id @default(cuid())
+  userId      String
+
+  fileName    String
+  fileType    String   // image/jpeg, image/png, etc.
+  fileSize    Int
+  url         String   // R2 Public URL
+  key         String   // R2 Object Key
+
+  entityType  String?  // Meeting, Profile, Banner, etc.
+  entityId    String?
+
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([entityType, entityId])
+}

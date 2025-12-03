@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: docker.io/library/postgres:15-alpine
+    container_name: sommoim-postgres
+    environment:
+      POSTGRES_DB: sommoim
+      POSTGRES_USER: sommoim
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sommoim_dev_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sommoim -d sommoim"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sommoim-network
+
+  redis:
+    image: docker.io/library/redis:7-alpine
+    container_name: sommoim-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sommoim-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sommoim-backend
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://sommoim:${POSTGRES_PASSWORD:-sommoim_dev_password}@postgres:5432/sommoim
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-dev_jwt_secret_change_in_production}
+      JWT_EXPIRES_IN: 15m
+      JWT_REFRESH_EXPIRES_IN: 7d
+      PORT: 3001
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend/src:/app/src:ro
+    networks:
+      - sommoim-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: sommoim-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend/src:/app/src:ro
+    networks:
+      - sommoim-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  sommoim-network:
+    driver: bridge
