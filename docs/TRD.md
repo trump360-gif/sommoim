@@ -1,8 +1,8 @@
-# 소모임 플랫폼 (Sommoim) - TRD v3.1
+# 소모임 플랫폼 (Sommoim) - TRD v3.2
 
 **작성일:** 2025-12-03
-**버전:** 3.1
-**상태:** 개발 준비 완료
+**버전:** 3.2
+**상태:** 개발 진행 중 (Phase 1 완료)
 
 ---
 
@@ -764,13 +764,14 @@ SENTRY_DSN=https://...@sentry.io/...
 
 ## 10. 개발 일정 (12주)
 
-### Phase 1: 기초 구축 (1.5주)
-- NestJS 프로젝트 초기화
-- Prisma 스키마 작성
-- Auth 모듈 (회원가입, 로그인, JWT)
-- Podman 설정
+### Phase 1: 기초 구축 (1.5주) ✅ 완료
+- ✅ NestJS 프로젝트 초기화
+- ✅ Prisma 스키마 작성 (17개 모델)
+- ✅ Next.js 프론트엔드 초기화
+- ✅ Auth 모듈 (회원가입, 로그인, JWT, httpOnly 쿠키)
+- ✅ Podman 설정
 
-### Phase 2: 코어 기능 (2.5주)
+### Phase 2: 코어 기능 (2.5주) 🔜 진행 예정
 - 모임 CRUD
 - 검색 & 필터링
 - 참가 신청/승인
@@ -794,6 +795,59 @@ SENTRY_DSN=https://...@sentry.io/...
 - 성능 최적화
 - 테스트
 - 배포
+
+---
+
+## 11. 구현 현황
+
+### 11.1 백엔드 모듈
+
+| 모듈 | 파일 | 상태 |
+|------|------|------|
+| Auth | `src/modules/auth/` | ✅ 완료 |
+| Users | `src/modules/users/` | 🔜 예정 |
+| Meetings | `src/modules/meetings/` | 🔜 예정 |
+| Participants | `src/modules/participants/` | 🔜 예정 |
+| Reviews | `src/modules/reviews/` | 🔜 예정 |
+| Notifications | `src/modules/notifications/` | 🔜 예정 |
+| Chat | `src/modules/chat/` | 🔜 예정 |
+| Admin | `src/modules/admin/` | 🔜 예정 |
+| Upload | `src/modules/upload/` | 🔜 예정 |
+
+### 11.2 Auth 모듈 상세
+
+```
+backend/src/modules/auth/
+├── auth.module.ts          # 모듈 정의
+├── auth.controller.ts      # API 엔드포인트
+├── auth.service.ts         # 비즈니스 로직
+├── strategies/
+│   └── jwt.strategy.ts     # JWT 검증 전략
+├── guards/
+│   ├── jwt-auth.guard.ts   # 인증 가드
+│   └── roles.guard.ts      # 권한 가드
+├── decorators/
+│   ├── public.decorator.ts     # @Public()
+│   ├── roles.decorator.ts      # @Roles()
+│   └── current-user.decorator.ts # @CurrentUser()
+└── dto/
+    ├── register.dto.ts     # 회원가입 DTO
+    └── login.dto.ts        # 로그인 DTO
+```
+
+### 11.3 Prisma 스키마
+
+```
+17개 모델 구현 완료:
+- User, Profile, Follow
+- Meeting, MeetingSchedule
+- Participant, Review, Report
+- UserBlock, Notification, ChatMessage
+- Bookmark, PageSection, Banner
+- CategoryEntity, ActivityLog
+- RefreshToken, TokenBlacklist
+- SystemSetting, UploadedFile
+```
 
 ---
 
