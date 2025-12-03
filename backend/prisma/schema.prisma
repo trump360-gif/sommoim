@@ -105,6 +105,7 @@ model Meeting {
   reports         Report[]
   chatMessages    ChatMessage[]
   bookmarks       Bookmark[]
+  activities      MeetingActivity[]
 
   viewCount       Int           @default(0)
 
@@ -391,6 +392,43 @@ model CategoryEntity {
   updatedAt   DateTime @updatedAt
 
   @@index([order])
+}
+
+// ========== 모임 활동 기록 ==========
+
+model MeetingActivity {
+  id          String   @id @default(cuid())
+  meetingId   String
+  meeting     Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+  date        DateTime
+  location    String?
+
+  images      ActivityImage[]
+
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([meetingId])
+  @@index([date])
+}
+
+model ActivityImage {
+  id          String   @id @default(cuid())
+  activityId  String
+  activity    MeetingActivity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  imageUrl    String
+  caption     String?
+  order       Int      @default(0)
+
+  uploadedById String
+  createdAt   DateTime @default(now())
+
+  @@index([activityId])
 }
 
 // ========== 활동 로그 ==========

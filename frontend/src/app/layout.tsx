@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import '@/styles/globals.css';
 import { Providers } from './providers';
+import { Header } from '@/components/layout/header';
+import { LayoutWrapper } from '@/components/layout/layout-wrapper';
 
 export const metadata: Metadata = {
   title: '소모임 - 함께하는 즐거움',
@@ -15,7 +17,10 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body className="min-h-screen bg-gray-50 antialiased">
-        <Providers>{children}</Providers>
+        <Providers>
+          <Header />
+          <LayoutWrapper>{children}</LayoutWrapper>
+        </Providers>
       </body>
     </html>
   );

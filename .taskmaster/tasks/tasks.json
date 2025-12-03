@@ -136,13 +136,102 @@
         ],
         "priority": "medium",
         "subtasks": []
+      },
+      {
+        "id": "7",
+        "title": "모임 CRUD 모듈 구현",
+        "description": "모임 생성/조회/수정/삭제 API, 일정 관리, 상태 관리 구현",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [
+          "5"
+        ],
+        "priority": "high",
+        "subtasks": [],
+        "updatedAt": "2025-12-03T12:24:22.096Z"
+      },
+      {
+        "id": "8",
+        "title": "참가 신청/승인 모듈 구현",
+        "description": "모임 참가 신청, 승인/거절, 취소, 강퇴 API 구현",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [
+          "7"
+        ],
+        "priority": "high",
+        "subtasks": [],
+        "updatedAt": "2025-12-03T12:24:22.109Z"
+      },
+      {
+        "id": "9",
+        "title": "검색 및 필터링 구현",
+        "description": "모임 검색, 카테고리/지역/날짜/상태 필터링, 정렬 기능 구현",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [
+          "7"
+        ],
+        "priority": "high",
+        "subtasks": [],
+        "updatedAt": "2025-12-03T12:24:22.120Z"
+      },
+      {
+        "id": "10",
+        "title": "프론트엔드 인증 페이지 구현",
+        "description": "로그인, 회원가입, 프로필 페이지 구현",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [
+          "5"
+        ],
+        "priority": "high",
+        "subtasks": [],
+        "updatedAt": "2025-12-03T12:30:26.292Z"
+      },
+      {
+        "id": "11",
+        "title": "프론트엔드 모임 페이지 구현",
+        "description": "모임 목록, 모임 상세, 모임 생성/수정 페이지 구현",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [
+          "7",
+          "10"
+        ],
+        "priority": "high",
+        "subtasks": [],
+        "updatedAt": "2025-12-03T12:30:26.318Z"
+      },
+      {
+        "id": "12",
+        "title": "통합 테스트 및 오류 수정",
+        "description": "전체 기능 통합 테스트, 발견된 오류 수정",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [
+          "7",
+          "8",
+          "9",
+          "10",
+          "11"
+        ],
+        "priority": "high",
+        "subtasks": [],
+        "updatedAt": "2025-12-03T12:30:26.335Z"
       }
     ],
     "metadata": {
       "version": "1.0.0",
-      "lastModified": "2025-12-03T12:10:32.390Z",
-      "taskCount": 6,
-      "completedCount": 5,
+      "lastModified": "2025-12-03T12:30:26.335Z",
+      "taskCount": 12,
+      "completedCount": 11,
       "tags": [
         "master"
       ]

@@ -5,36 +5,23 @@ import helmet from 'helmet';
 import * as cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-
-  const configService = app.get(ConfigService);
-  const port = configService.get<number>('PORT') || 3000;
-
-  // 보안 헤더
+function configureApp(app: any, config: ConfigService) {
   app.use(helmet());
-
-  // 쿠키 파서
   app.use(cookieParser());
-
-  // CORS 설정
   app.enableCors({
-    origin: configService.get<string>('FRONTEND_URL') || 'http://localhost:3001',
+    origin: config.get('FRONTEND_URL') || 'http://localhost:3004',
     credentials: true,
   });
-
-  // 전역 Validation Pipe
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
-  );
-
-  // API 프리픽스
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
   app.setGlobalPrefix('api');
+}
 
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  const config = app.get(ConfigService);
+  configureApp(app, config);
+
+  const port = config.get<number>('PORT') || 4000;
   await app.listen(port);
   console.log(`Server running on http://localhost:${port}`);
 }

@@ -37,14 +37,18 @@ export interface Meeting {
     nickname: string;
     profile?: {
       avatarUrl?: string;
+      bio?: string;
     };
   };
   viewCount: number;
   createdAt: string;
   updatedAt: string;
+  schedules?: MeetingSchedule[];
+  participants?: Participant[];
   _count?: {
     participants: number;
-    bookmarks: number;
+    bookmarks?: number;
+    reviews?: number;
   };
 }
 
