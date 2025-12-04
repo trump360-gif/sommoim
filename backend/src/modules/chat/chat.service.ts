@@ -20,6 +20,9 @@ export class ChatService {
   }
 
   async createMessage(meetingId: string, userId: string, content: string) {
+    if (!(await this.canAccessChat(meetingId, userId))) {
+      throw new ForbiddenException('채팅방에 접근할 수 없습니다');
+    }
     return this.prisma.chatMessage.create({
       data: { meetingId, userId, content: this.sanitize(content) },
       include: this.userSelect,

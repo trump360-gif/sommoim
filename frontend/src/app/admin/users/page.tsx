@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
-import { Tabs } from '@/components/ui/tabs';
+import { SimpleTabs as Tabs } from '@/components/ui/tabs';
 import type { User, PaginatedResponse } from '@/types';
 
 const ROLE_TABS = [

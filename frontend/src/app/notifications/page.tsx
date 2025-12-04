@@ -14,6 +14,8 @@ const typeLabels: Record<string, string> = {
   MEETING_CANCELLED: '모임 취소',
   NEW_REVIEW: '새 리뷰',
   REMINDER: '알림',
+  NEW_APPLICATION: '새 참가 신청',
+  MEMBER_WITHDRAWN: '멤버 탈퇴',
 };
 
 function formatDate(dateString: string) {

@@ -33,6 +33,11 @@ export interface UpdateMeetingDto extends Partial<CreateMeetingDto> {
   status?: MeetingStatus;
 }
 
+export interface RecommendedMeeting extends Meeting {
+  score: number;
+  reason: string[];
+}
+
 export const meetingsApi = {
   // 모임 CRUD
   getAll: (params?: MeetingQueryParams) =>
@@ -43,9 +48,29 @@ export const meetingsApi = {
   delete: (id: string) => api.delete<void>(`/meetings/${id}`),
   cancel: (id: string) => api.post<{ message: string }>(`/meetings/${id}/cancel`),
 
+  // 추천
+  getRecommended: (limit?: number) =>
+    api.get<RecommendedMeeting[]>('/meetings/recommended', { params: { limit } }),
+  getPopular: (limit?: number) =>
+    api.get<Meeting[]>('/meetings/popular', { params: { limit } }),
+  getNearby: (location: string, limit?: number) =>
+    api.get<Meeting[]>('/meetings/nearby', { params: { location, limit } }),
+  getByCategory: (category: Category, limit?: number) =>
+    api.get<Meeting[]>(`/meetings/category/${category}`, { params: { limit } }),
+
+  // 일정 관리
+  addSchedule: (meetingId: string, data: CreateScheduleDto) =>
+    api.post<MeetingSchedule>(`/meetings/${meetingId}/schedules`, data),
+  updateSchedule: (scheduleId: string, data: Partial<CreateScheduleDto>) =>
+    api.put<MeetingSchedule>(`/meetings/schedules/${scheduleId}`, data),
+  deleteSchedule: (scheduleId: string) =>
+    api.delete<void>(`/meetings/schedules/${scheduleId}`),
+
   // 참가
   apply: (meetingId: string) => api.post<Participant>(`/meetings/${meetingId}/participants`),
-  cancelParticipation: (meetingId: string) => api.delete<void>(`/meetings/${meetingId}/participants/me`),
+  cancelApplication: (meetingId: string) => api.delete<void>(`/meetings/${meetingId}/participants/me`),
+  withdraw: (meetingId: string, reason?: string) =>
+    api.post<Participant>(`/meetings/${meetingId}/participants/withdraw`, { reason }),
   getParticipants: (meetingId: string, status?: string) =>
     api.get<Participant[]>(`/meetings/${meetingId}/participants`, { params: { status } }),
   updateParticipant: (meetingId: string, participantId: string, status: 'APPROVED' | 'REJECTED' | 'KICKED', reason?: string) =>
@@ -76,6 +101,49 @@ export const meetingsApi = {
   // 내 캘린더
   getMyCalendar: (startDate?: string, endDate?: string) =>
     api.get<CalendarEvent[]>('/users/me/calendar', { params: { startDate, endDate } }),
+
+  // 운영진 관리
+  getStaffList: (meetingId: string) =>
+    api.get<MeetingStaff[]>(`/meetings/${meetingId}/staff`),
+  addStaff: (meetingId: string, data: AddStaffDto) =>
+    api.post<MeetingStaff>(`/meetings/${meetingId}/staff`, data),
+  updateStaff: (meetingId: string, staffUserId: string, data: UpdateStaffDto) =>
+    api.put<MeetingStaff>(`/meetings/${meetingId}/staff/${staffUserId}`, data),
+  removeStaff: (meetingId: string, staffUserId: string) =>
+    api.delete<void>(`/meetings/${meetingId}/staff/${staffUserId}`),
+  getMyRole: (meetingId: string) =>
+    api.get<{ role: StaffRole | 'HOST' | null }>(`/meetings/${meetingId}/my-role`),
+
+  // 가입 질문
+  getJoinQuestions: (meetingId: string) =>
+    api.get<JoinQuestion[]>(`/meetings/${meetingId}/join-questions`),
+  createJoinQuestion: (meetingId: string, data: CreateJoinQuestionDto) =>
+    api.post<JoinQuestion>(`/meetings/${meetingId}/join-questions`, data),
+  updateJoinQuestion: (questionId: string, data: Partial<CreateJoinQuestionDto>) =>
+    api.put<JoinQuestion>(`/meetings/join-questions/${questionId}`, data),
+  deleteJoinQuestion: (questionId: string) =>
+    api.delete<void>(`/meetings/join-questions/${questionId}`),
+
+  // 가입 신청
+  applyMeeting: (meetingId: string, data: ApplyMeetingDto) =>
+    api.post<{ participant: Application; autoApproved: boolean; message: string }>(
+      `/meetings/${meetingId}/apply`,
+      data
+    ),
+  getApplications: (meetingId: string, status?: string) =>
+    api.get<Application[]>(`/meetings/${meetingId}/applications`, { params: { status } }),
+  getApplicationDetail: (participantId: string) =>
+    api.get<Application>(`/meetings/applications/${participantId}`),
+  reviewApplication: (participantId: string, data: ReviewApplicationDto) =>
+    api.put<{ participant: Application; message: string }>(
+      `/meetings/applications/${participantId}/review`,
+      data
+    ),
+  bulkReviewApplications: (meetingId: string, participantIds: string[], data: ReviewApplicationDto) =>
+    api.post<{ success: number; failed: { error: string; id: string }[] }>(
+      `/meetings/${meetingId}/applications/bulk-review`,
+      { ...data, participantIds }
+    ),
 };
 
 // Types
@@ -148,4 +216,107 @@ export interface CreateActivityDto {
   endTime?: string;
   location?: string;
   images?: { imageUrl: string; caption?: string; order?: number }[];
+}
+
+export interface CreateScheduleDto {
+  startTime: string;
+  endTime: string;
+  location?: string;
+  note?: string;
+}
+
+export interface MeetingSchedule {
+  id: string;
+  meetingId: string;
+  startTime: string;
+  endTime: string;
+  location?: string;
+  note?: string;
+}
+
+// Staff Types
+export type StaffRole = 'CO_HOST' | 'MANAGER' | 'STAFF';
+export type StaffPermission =
+  | 'MANAGE_EVENTS'
+  | 'MANAGE_SCHEDULES'
+  | 'MANAGE_ACTIVITIES'
+  | 'MANAGE_MEMBERS'
+  | 'MANAGE_CHAT'
+  | 'VIEW_STATS';
+
+export interface MeetingStaff {
+  id: string;
+  meetingId: string;
+  userId: string;
+  role: StaffRole;
+  permissions: StaffPermission[];
+  createdAt: string;
+  user?: {
+    id: string;
+    name: string;
+    profileImage?: string;
+  };
+}
+
+export interface AddStaffDto {
+  userId: string;
+  role: StaffRole;
+  permissions?: StaffPermission[];
+}
+
+export interface UpdateStaffDto {
+  role?: StaffRole;
+  permissions?: StaffPermission[];
+}
+
+// Join Question Types
+export interface JoinQuestion {
+  id: string;
+  meetingId: string;
+  question: string;
+  isRequired: boolean;
+  order: number;
+  createdAt: string;
+}
+
+export interface JoinAnswer {
+  id: string;
+  questionId: string;
+  participantId: string;
+  answer: string;
+  question?: { question: string };
+}
+
+export interface Application {
+  id: string;
+  meetingId: string;
+  userId: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'KICKED';
+  introduction?: string;
+  rejectedReason?: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  createdAt: string;
+  user: {
+    id: string;
+    nickname: string;
+    profile?: { avatarUrl?: string; bio?: string };
+  };
+  answers: JoinAnswer[];
+}
+
+export interface CreateJoinQuestionDto {
+  question: string;
+  isRequired?: boolean;
+  order?: number;
+}
+
+export interface ApplyMeetingDto {
+  introduction?: string;
+  answers?: { questionId: string; answer: string }[];
+}
+
+export interface ReviewApplicationDto {
+  status: 'APPROVED' | 'REJECTED';
+  reason?: string;
 }

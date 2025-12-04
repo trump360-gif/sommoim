@@ -55,6 +55,10 @@ model Profile {
   bio          String?
   avatarUrl    String?
   faceImageUrl String?
+  location     String?  // 선호 지역
+
+  // 관심사 (카테고리 배열)
+  interests    Category[]
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -106,6 +110,9 @@ model Meeting {
   chatMessages    ChatMessage[]
   bookmarks       Bookmark[]
   activities      MeetingActivity[]
+  events          MeetingEvent[]
+  staff           MeetingStaff[]
+  joinQuestions   JoinQuestion[]
 
   viewCount       Int           @default(0)
 
@@ -154,6 +161,152 @@ enum MeetingStatus {
   CANCELLED
 }
 
+// ========== 운영진 ==========
+
+model MeetingStaff {
+  id          String      @id @default(cuid())
+  meetingId   String
+  meeting     Meeting     @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  userId      String
+
+  role        StaffRole
+  permissions StaffPermission[]
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@unique([meetingId, userId])
+  @@index([meetingId])
+  @@index([userId])
+}
+
+enum StaffRole {
+  CO_HOST     // 공동 운영자 (거의 모든 권한)
+  MANAGER     // 매니저 (일정/활동 관리)
+  STAFF       // 스태프 (기본 관리)
+}
+
+enum StaffPermission {
+  MANAGE_EVENTS      // 정모/번개 관리
+  MANAGE_SCHEDULES   // 일정 관리
+  MANAGE_ACTIVITIES  // 활동 기록 관리
+  MANAGE_MEMBERS     // 멤버 승인/거절
+  MANAGE_CHAT        // 채팅 관리
+  VIEW_STATS         // 통계 조회
+}
+
+// ========== 정모/번개 이벤트 ==========
+
+model MeetingEvent {
+  id              String          @id @default(cuid())
+  meetingId       String
+  meeting         Meeting         @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  type            EventType       @default(REGULAR)
+  title           String
+  description     String?
+  date            DateTime
+  endTime         DateTime?
+  location        String?
+  maxParticipants Int?
+
+  // 반복 일정
+  recurringId     String?         // 같은 반복 그룹 ID
+  recurringRule   RecurringRule?  // 반복 규칙
+
+  // QR 출석
+  qrCode          String?         @unique
+  qrExpiresAt     DateTime?
+
+  participants    EventParticipant[]
+  chatMessages    EventChatMessage[]
+
+  createdById     String
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([meetingId])
+  @@index([date])
+  @@index([type])
+  @@index([recurringId])
+}
+
+enum EventType {
+  REGULAR   // 정모
+  LIGHTNING // 번개
+}
+
+enum RecurringRule {
+  WEEKLY    // 매주
+  BIWEEKLY  // 격주
+  MONTHLY   // 매월
+}
+
+// ========== 이벤트 참가자 ==========
+
+model EventParticipant {
+  id          String              @id @default(cuid())
+  eventId     String
+  event       MeetingEvent        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId      String
+
+  status      EventParticipantStatus @default(PENDING)
+  attendedAt  DateTime?           // QR 체크인 시간
+
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@unique([eventId, userId])
+  @@index([eventId])
+  @@index([userId])
+  @@index([status])
+}
+
+enum EventParticipantStatus {
+  PENDING     // 대기
+  CONFIRMED   // 참석 확정
+  DECLINED    // 불참
+  ATTENDED    // 출석 완료
+  NO_SHOW     // 노쇼
+}
+
+// ========== 이벤트별 채팅 ==========
+
+model EventChatMessage {
+  id          String       @id @default(cuid())
+  eventId     String
+  event       MeetingEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId      String
+  content     String
+
+  deletedAt   DateTime?
+  createdAt   DateTime     @default(now())
+
+  @@index([eventId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// ========== 가입 질문 ==========
+
+model JoinQuestion {
+  id          String   @id @default(cuid())
+  meetingId   String
+  meeting     Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  question    String
+  isRequired  Boolean  @default(true)
+  order       Int      @default(0)
+
+  answers     JoinAnswer[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([meetingId])
+  @@index([order])
+}
+
 // ========== 참가 ==========
 
 model Participant {
@@ -162,8 +315,19 @@ model Participant {
   userId      String
   status      ParticipantStatus @default(PENDING)
 
+  // 심사 관련
+  introduction String?          // 자기소개
+  rejectedReason String?        // 거절 사유
+  reviewedBy  String?           // 심사한 운영진 ID
+  reviewedAt  DateTime?         // 심사 일시
+
+  // 탈퇴 관련
+  withdrawReason String?        // 탈퇴 사유
+  withdrawnAt DateTime?         // 탈퇴 일시
+
   meeting     Meeting           @relation(fields: [meetingId], references: [id], onDelete: Cascade)
   user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answers     JoinAnswer[]
 
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
@@ -172,6 +336,22 @@ model Participant {
   @@index([meetingId])
   @@index([userId])
   @@index([status])
+}
+
+model JoinAnswer {
+  id            String        @id @default(cuid())
+  questionId    String
+  question      JoinQuestion  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  participantId String
+  participant   Participant   @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  answer        String
+
+  createdAt     DateTime      @default(now())
+
+  @@unique([questionId, participantId])
+  @@index([questionId])
+  @@index([participantId])
 }
 
 enum ParticipantStatus {
@@ -301,6 +481,8 @@ enum NotificationType {
   MEETING_CANCELLED
   NEW_REVIEW
   REMINDER
+  NEW_APPLICATION
+  MEMBER_WITHDRAWN
 }
 
 enum NotificationPriority {

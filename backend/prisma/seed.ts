@@ -13,14 +13,14 @@ const TEST_USERS = [
 ];
 
 const MEETINGS = [
-  { title: '주말 풋살 모임', description: '매주 토요일 오전 풋살합니다', category: Category.SPORTS, location: '서울 마포구', max: 12 },
-  { title: '강남 맛집 탐방', description: '매주 금요일 저녁 강남 맛집 탐방', category: Category.FOOD, location: '서울 강남구', max: 8 },
-  { title: '월간 독서 모임', description: '매월 한 권의 책을 정해 토론합니다', category: Category.STUDY, location: '서울 종로구', max: 10 },
-  { title: 'LOL 클랜 모집', description: '실버~골드 티어 분들 함께 해요', category: Category.GAMES, location: '온라인', max: 20 },
-  { title: '북한산 등산 동호회', description: '매주 일요일 북한산 등산', category: Category.SPORTS, location: '서울 은평구', max: 15 },
-  { title: '전시회 함께 가실 분', description: '미술관, 박물관 같이 다녀요', category: Category.CULTURE, location: '서울 용산구', max: 6 },
-  { title: '제주도 여행 동행', description: '다음 달 제주도 3박4일 여행', category: Category.TRAVEL, location: '제주도', max: 4 },
-  { title: '코딩 스터디', description: 'JavaScript/TypeScript 스터디', category: Category.STUDY, location: '서울 강남구', max: 8 },
+  { title: '주말 풋살 모임', description: '매주 토요일 오전 풋살합니다', category: Category.SPORTS, location: '서울 마포구', max: 12, autoApprove: true },
+  { title: '강남 맛집 탐방', description: '매주 금요일 저녁 강남 맛집 탐방', category: Category.FOOD, location: '서울 강남구', max: 8, autoApprove: true },
+  { title: '월간 독서 모임', description: '매월 한 권의 책을 정해 토론합니다', category: Category.STUDY, location: '서울 종로구', max: 10, autoApprove: false },
+  { title: 'LOL 클랜 모집', description: '실버~골드 티어 분들 함께 해요', category: Category.GAMES, location: '온라인', max: 20, autoApprove: true },
+  { title: '북한산 등산 동호회', description: '매주 일요일 북한산 등산', category: Category.SPORTS, location: '서울 은평구', max: 15, autoApprove: false },
+  { title: '전시회 함께 가실 분', description: '미술관, 박물관 같이 다녀요', category: Category.CULTURE, location: '서울 용산구', max: 6, autoApprove: false },
+  { title: '제주도 여행 동행', description: '다음 달 제주도 3박4일 여행', category: Category.TRAVEL, location: '제주도', max: 4, autoApprove: false },
+  { title: '코딩 스터디', description: 'JavaScript/TypeScript 스터디', category: Category.STUDY, location: '서울 강남구', max: 8, autoApprove: true },
 ];
 
 async function seedUsers() {
@@ -49,6 +49,7 @@ async function seedMeetings(users: any[]) {
       data: {
         title: m.title, description: m.description, category: m.category, location: m.location,
         maxParticipants: m.max, status: MeetingStatus.RECRUITING, hostId: host.id, viewCount: Math.floor(Math.random() * 100),
+        autoApprove: m.autoApprove,
         schedules: { create: generateSchedules() },
       },
     });
@@ -72,12 +73,16 @@ function generateSchedules() {
 
 async function seedParticipants(users: any[], meetings: any[]) {
   console.log('Seeding participants...');
-  for (const meeting of meetings) {
+  for (let mIdx = 0; mIdx < meetings.length; mIdx++) {
+    const meeting = meetings[mIdx];
+    const meetingConfig = MEETINGS[mIdx];
     const otherUsers = users.filter((u) => u.id !== meeting.hostId);
     const participantCount = Math.min(Math.floor(Math.random() * 4) + 1, otherUsers.length);
     for (let i = 0; i < participantCount; i++) {
+      // autoApprove가 false인 모임에서는 첫 번째 참가자만 APPROVED, 나머지는 PENDING
+      const status = meetingConfig.autoApprove || i === 0 ? ParticipantStatus.APPROVED : ParticipantStatus.PENDING;
       await prisma.participant.create({
-        data: { meetingId: meeting.id, userId: otherUsers[i].id, status: ParticipantStatus.APPROVED },
+        data: { meetingId: meeting.id, userId: otherUsers[i].id, status },
       });
     }
   }

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { NotificationDropdown } from './notification-dropdown';
 
 export function Header() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -34,6 +35,7 @@ export function Header() {
                   </Button>
                 </Link>
               )}
+              <NotificationDropdown />
               <Link
                 href="/mypage"
                 className="text-sm font-medium text-gray-600 hover:text-gray-900"

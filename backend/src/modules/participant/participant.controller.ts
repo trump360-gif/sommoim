@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Put, Delete, Param, Body, Query, HttpCode, HttpStatus } from '@nestjs/common';
 import { ParticipantService } from './participant.service';
-import { UpdateParticipantStatusDto, ParticipantQueryDto } from './dto/participant.dto';
+import { UpdateParticipantStatusDto, ParticipantQueryDto, WithdrawDto } from './dto/participant.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 @Controller()
@@ -13,11 +13,21 @@ export class ParticipantController {
     return this.participantService.apply(meetingId, userId);
   }
 
-  // 참가 취소 (본인)
+  // 모임 탈퇴 (APPROVED 상태)
+  @Post('meetings/:meetingId/participants/withdraw')
+  withdraw(
+    @Param('meetingId') meetingId: string,
+    @CurrentUser('id') userId: string,
+    @Body() dto: WithdrawDto,
+  ) {
+    return this.participantService.withdraw(meetingId, userId, dto.reason);
+  }
+
+  // 참가 신청 취소 (PENDING 상태)
   @Delete('meetings/:meetingId/participants/me')
   @HttpCode(HttpStatus.NO_CONTENT)
-  cancel(@Param('meetingId') meetingId: string, @CurrentUser('id') userId: string) {
-    return this.participantService.cancel(meetingId, userId);
+  cancelApplication(@Param('meetingId') meetingId: string, @CurrentUser('id') userId: string) {
+    return this.participantService.cancelApplication(meetingId, userId);
   }
 
   // 참가자 상태 변경 (모임주)
@@ -31,10 +41,14 @@ export class ParticipantController {
     return this.participantService.updateStatus(meetingId, participantId, hostId, dto.status);
   }
 
-  // 모임 참가자 목록
+  // 모임 참가자 목록 (모임주만 조회 가능)
   @Get('meetings/:meetingId/participants')
-  findByMeeting(@Param('meetingId') meetingId: string, @Query() query: ParticipantQueryDto) {
-    return this.participantService.findByMeeting(meetingId, query.status);
+  findByMeeting(
+    @Param('meetingId') meetingId: string,
+    @CurrentUser('id') userId: string,
+    @Query() query: ParticipantQueryDto,
+  ) {
+    return this.participantService.findByMeeting(meetingId, userId, query.status);
   }
 
   // 내 참가 모임 목록

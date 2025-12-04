@@ -1,12 +1,12 @@
 'use client';
 
-import { use, useState } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { meetingsApi } from '@/lib/api/meetings';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import type { Participant } from '@/types';
 
 type StatusFilter = 'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'KICKED';
@@ -20,8 +20,8 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   ATTENDED: { label: '참석함', color: 'bg-blue-100 text-blue-800' },
 };
 
-export default function ParticipantsPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function ParticipantsPage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<StatusFilter>('ALL');

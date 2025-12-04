@@ -8,7 +8,7 @@ import { adminApi } from '@/lib/api/admin';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
-import { Tabs } from '@/components/ui/tabs';
+import { SimpleTabs as Tabs } from '@/components/ui/tabs';
 import type { Meeting, PaginatedResponse } from '@/types';
 
 const STATUS_TABS = [

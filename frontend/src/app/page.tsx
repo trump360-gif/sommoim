@@ -135,7 +135,7 @@ export default function HomePage() {
               >
                 <div
                   className={`flex h-12 w-12 items-center justify-center rounded-full text-2xl ${!isHexColor && cat.color ? cat.color : ''}`}
-                  style={isHexColor ? { backgroundColor: cat.color } : undefined}
+                  style={isHexColor && cat.color ? { backgroundColor: cat.color } : undefined}
                 >
                   {cat.icon}
                 </div>

@@ -1,7 +1,7 @@
-# 소모임 플랫폼 (Sommoim) - PRD v3.4
+# 소모임 플랫폼 (Sommoim) - PRD v3.5
 
 **작성일:** 2025-12-04
-**버전:** 3.4
+**버전:** 3.5
 **상태:** 개발 진행 중 (Phase 1-6 완료)
 
 ---
@@ -165,7 +165,8 @@
 | 신청 | 모임 참가 신청 | ✅ 완료 |
 | 자동 승인 | 모임주가 설정 가능 | ✅ 완료 |
 | 승인/거절 | 모임주가 처리 | ✅ 완료 |
-| 취소 | 참가자가 직접 취소 | ✅ 완료 |
+| 신청 취소 | PENDING 상태에서 취소 | ✅ 완료 |
+| 탈퇴 | APPROVED 상태에서 탈퇴 (사유 입력 가능) | ✅ 완료 |
 | 강퇴 | 모임주가 참가자 강퇴 | ✅ 완료 |
 
 ### 3.4 리뷰 & 평점
@@ -202,10 +203,21 @@
 |------|--------|--------|------|
 | 참가 승인 | 모임주가 승인 시 | HIGH | ✅ 완료 |
 | 참가 거절 | 모임주가 거절 시 | HIGH | ✅ 완료 |
+| 새 참가 신청 | 수동 승인 모임에 신청 시 | HIGH | ✅ 완료 |
+| 멤버 탈퇴 | 참가자가 탈퇴 시 | NORMAL | ✅ 완료 |
 | 일정 변경 | 모임 일정 수정 시 | HIGH | ✅ 완료 |
 | 리마인더 | 일정 1시간 전 | NORMAL | 🔜 예정 |
 | 새 리뷰 | 내 모임에 리뷰 작성 시 | NORMAL | ✅ 완료 |
 | 모임 취소 | 모임이 취소될 때 | CRITICAL | ✅ 완료 |
+
+#### 3.6.2 알림 UI
+
+| 기능 | 설명 | 상태 |
+|------|------|------|
+| 헤더 알림 아이콘 | 읽지 않은 알림 개수 배지 | ✅ 완료 |
+| 알림 드롭다운 | 클릭 시 최근 알림 5개 표시 | ✅ 완료 |
+| 자동 새로고침 | 30초마다 알림 폴링 | ✅ 완료 |
+| 알림 페이지 | 전체 알림 목록 조회 | ✅ 완료 |
 
 ### 3.7 채팅
 
@@ -385,6 +397,9 @@
 | - | 관리자 히어로 색상/이미지 편집 | ✅ 완료 | 2025-12-04 |
 | - | 드래그앤드롭 이미지 업로더 | ✅ 완료 | 2025-12-04 |
 | - | 관리자 초기 시드 데이터 (섹션/배너) | ✅ 완료 | 2025-12-04 |
+| - | 모임 탈퇴 기능 (사유 입력) | ✅ 완료 | 2025-12-04 |
+| - | 헤더 알림 드롭다운 | ✅ 완료 | 2025-12-04 |
+| - | 알림 자동 폴링 (30초) | ✅ 완료 | 2025-12-04 |
 
 ### 6.2 구현된 API
 
@@ -414,13 +429,14 @@ GET    /api/meetings/:id/activities    ✅ 활동 목록
 POST   /api/meetings/:id/activities    ✅ 활동 생성
 ```
 
-#### 참가자 API (5개)
+#### 참가자 API (7개)
 ```
-POST   /api/meetings/:id/participants     ✅ 참가 신청
-GET    /api/meetings/:id/participants     ✅ 참가자 목록
-PUT    /api/participants/:id/approve      ✅ 승인
-PUT    /api/participants/:id/reject       ✅ 거절
-DELETE /api/participants/:id              ✅ 강퇴
+POST   /api/meetings/:id/participants          ✅ 참가 신청
+GET    /api/meetings/:id/participants          ✅ 참가자 목록
+PUT    /api/meetings/:id/participants/:pid     ✅ 상태 변경 (승인/거절/강퇴)
+DELETE /api/meetings/:id/participants/me       ✅ 신청 취소
+POST   /api/meetings/:id/participants/withdraw ✅ 탈퇴 (사유 입력 가능)
+GET    /api/users/me/participations            ✅ 내 참가 모임 목록
 ```
 
 #### 리뷰 API (4개)
@@ -431,9 +447,10 @@ PUT    /api/reviews/:id           ✅ 리뷰 수정
 DELETE /api/reviews/:id           ✅ 리뷰 삭제
 ```
 
-#### 알림 API (4개)
+#### 알림 API (5개)
 ```
-GET    /api/notifications              ✅ 알림 목록
+GET    /api/notifications              ✅ 알림 목록 (페이지네이션)
+GET    /api/notifications/unread       ✅ 읽지 않은 알림
 PUT    /api/notifications/:id/read     ✅ 읽음 표시
 PUT    /api/notifications/read-all     ✅ 모두 읽음
 DELETE /api/notifications/:id          ✅ 알림 삭제

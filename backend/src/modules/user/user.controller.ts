@@ -9,7 +9,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { MeetingService } from '../meeting/meeting.service';
+import { MeetingCalendarService } from '../meeting/meeting-calendar.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { CalendarQueryDto } from '../meeting/dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -18,7 +18,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 export class UserController {
   constructor(
     private readonly userService: UserService,
-    private readonly meetingService: MeetingService,
+    private readonly calendarService: MeetingCalendarService,
   ) {}
 
   @Get('me')
@@ -52,7 +52,7 @@ export class UserController {
 
   @Get('me/calendar')
   getMyCalendar(@CurrentUser('id') userId: string, @Query() query: CalendarQueryDto) {
-    return this.meetingService.getMyCalendarEvents(userId, query);
+    return this.calendarService.getMyCalendarEvents(userId, query);
   }
 
   @Get(':id')

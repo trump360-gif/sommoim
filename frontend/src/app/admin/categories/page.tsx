@@ -73,8 +73,8 @@ export default function AdminCategoriesPage() {
       id,
       data: {
         ...formData,
-        color: formData.color || null,
-        icon: formData.icon || null,
+        color: formData.color || undefined,
+        icon: formData.icon || undefined,
       },
     });
   };

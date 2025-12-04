@@ -1,7 +1,7 @@
-# 소모임 플랫폼 (Sommoim) - TRD v3.4
+# 소모임 플랫폼 (Sommoim) - TRD v3.5
 
 **작성일:** 2025-12-04
-**버전:** 3.4
+**버전:** 3.5
 **상태:** 개발 진행 중 (Phase 1-6 완료)
 
 ---
@@ -309,7 +309,7 @@ model CategoryEntity {
 }
 ```
 
-### 4.2 구현된 API 엔드포인트 (55개+)
+### 4.2 구현된 API 엔드포인트 (58개+)
 
 #### 인증 (5개) ✅
 ```
@@ -341,13 +341,15 @@ POST   /api/meetings/activities/:id/images     - 활동 이미지 추가
 DELETE /api/meetings/activities/images/:id     - 활동 이미지 삭제
 ```
 
-#### 참가 (5개) ✅
+#### 참가 (7개) ✅
 ```
 POST   /api/meetings/:id/participants          - 참가 신청
 GET    /api/meetings/:id/participants          - 참가자 목록
 PUT    /api/participants/:id/approve           - 승인
 PUT    /api/participants/:id/reject            - 거절
 DELETE /api/participants/:id                   - 강퇴
+DELETE /api/participants/:id/withdraw          - 탈퇴 (사유 포함)
+POST   /api/activities/:id/attendance          - 활동 출석체크
 ```
 
 #### 리뷰 (4개) ✅
@@ -358,9 +360,10 @@ PUT    /api/reviews/:id           - 리뷰 수정
 DELETE /api/reviews/:id           - 리뷰 삭제
 ```
 
-#### 알림 (4개) ✅
+#### 알림 (5개) ✅
 ```
 GET    /api/notifications              - 알림 목록
+GET    /api/notifications/unread       - 읽지 않은 알림 조회
 PUT    /api/notifications/:id/read     - 읽음 표시
 PUT    /api/notifications/read-all     - 모두 읽음
 DELETE /api/notifications/:id          - 알림 삭제
@@ -686,6 +689,9 @@ socket.on('message:new', handleNewMessage);
 - ✅ 관리자 히어로 색상/이미지 편집
 - ✅ 드래그앤드롭 이미지 업로더
 - ✅ 관리자 시드 데이터 (섹션/배너)
+- ✅ 참가자 탈퇴 기능 (사유 입력)
+- ✅ 헤더 알림 드롭다운 UI
+- ✅ 알림 자동 폴링 (30초 간격)
 
 ### Phase 7: 폴리싱 🔜 예정
 - 🔜 이메일 인증

@@ -16,3 +16,10 @@ export class ParticipantQueryDto {
   @IsEnum(ParticipantStatus)
   status?: ParticipantStatus;
 }
+
+export class WithdrawDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  reason?: string;
+}
