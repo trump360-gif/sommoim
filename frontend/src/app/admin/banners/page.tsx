@@ -7,6 +7,7 @@ import { adminApi, Banner } from '@/lib/api/admin';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ImageUpload } from '@/components/ui/image-upload';
 
 export default function AdminBannersPage() {
   const { user, isAuthenticated } = useAuth();
@@ -16,6 +17,9 @@ export default function AdminBannersPage() {
   const [formData, setFormData] = useState({
     imageUrl: '',
     linkUrl: '',
+    title: '',
+    subtitle: '',
+    backgroundColor: '',
     order: 0,
     isActive: true,
     startDate: '',
@@ -51,19 +55,43 @@ export default function AdminBannersPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-banners'] }),
   });
 
-  const resetForm = () => setFormData({ imageUrl: '', linkUrl: '', order: 0, isActive: true, startDate: '', endDate: '' });
+  const resetForm = () => setFormData({
+    imageUrl: '',
+    linkUrl: '',
+    title: '',
+    subtitle: '',
+    backgroundColor: '',
+    order: 0,
+    isActive: true,
+    startDate: '',
+    endDate: ''
+  });
 
   const handleCreate = () => {
-    const data: any = { imageUrl: formData.imageUrl, order: formData.order, isActive: formData.isActive };
+    const data: any = {
+      order: formData.order,
+      isActive: formData.isActive
+    };
+    if (formData.imageUrl) data.imageUrl = formData.imageUrl;
     if (formData.linkUrl) data.linkUrl = formData.linkUrl;
+    if (formData.title) data.title = formData.title;
+    if (formData.subtitle) data.subtitle = formData.subtitle;
+    if (formData.backgroundColor) data.backgroundColor = formData.backgroundColor;
     if (formData.startDate) data.startDate = new Date(formData.startDate).toISOString();
     if (formData.endDate) data.endDate = new Date(formData.endDate).toISOString();
     createMutation.mutate(data);
   };
 
   const handleUpdate = (id: string) => {
-    const data: any = { imageUrl: formData.imageUrl, order: formData.order, isActive: formData.isActive };
+    const data: any = {
+      order: formData.order,
+      isActive: formData.isActive
+    };
+    if (formData.imageUrl) data.imageUrl = formData.imageUrl;
     if (formData.linkUrl) data.linkUrl = formData.linkUrl;
+    if (formData.title) data.title = formData.title;
+    if (formData.subtitle) data.subtitle = formData.subtitle;
+    if (formData.backgroundColor) data.backgroundColor = formData.backgroundColor;
     if (formData.startDate) data.startDate = new Date(formData.startDate).toISOString();
     if (formData.endDate) data.endDate = new Date(formData.endDate).toISOString();
     updateMutation.mutate({ id, data });
@@ -72,8 +100,11 @@ export default function AdminBannersPage() {
   const startEdit = (banner: Banner) => {
     setEditingId(banner.id);
     setFormData({
-      imageUrl: banner.imageUrl,
+      imageUrl: banner.imageUrl || '',
       linkUrl: banner.linkUrl || '',
+      title: (banner as any).title || '',
+      subtitle: (banner as any).subtitle || '',
+      backgroundColor: (banner as any).backgroundColor || '',
       order: banner.order,
       isActive: banner.isActive,
       startDate: banner.startDate ? banner.startDate.split('T')[0] : '',
@@ -116,12 +147,48 @@ export default function AdminBannersPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm font-medium">이미지 URL *</label>
-              <Input
+              <label className="mb-2 block text-sm font-medium">배너 이미지 *</label>
+              <ImageUpload
                 value={formData.imageUrl}
-                onChange={(e) => setFormData((p) => ({ ...p, imageUrl: e.target.value }))}
-                placeholder="https://example.com/banner.jpg"
+                onChange={(url) => setFormData((p) => ({ ...p, imageUrl: url }))}
+                onRemove={() => setFormData((p) => ({ ...p, imageUrl: '' }))}
               />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="mb-1 block text-sm font-medium">배너 제목</label>
+                <Input
+                  value={formData.title}
+                  onChange={(e) => setFormData((p) => ({ ...p, title: e.target.value }))}
+                  placeholder="배너 제목 (선택)"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">배너 부제목</label>
+                <Input
+                  value={formData.subtitle}
+                  onChange={(e) => setFormData((p) => ({ ...p, subtitle: e.target.value }))}
+                  placeholder="배너 부제목 (선택)"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">배경색 (이미지가 없을 때)</label>
+              <div className="flex gap-2">
+                <Input
+                  type="color"
+                  value={formData.backgroundColor || '#3B82F6'}
+                  onChange={(e) => setFormData((p) => ({ ...p, backgroundColor: e.target.value }))}
+                  className="h-10 w-20"
+                />
+                <Input
+                  value={formData.backgroundColor}
+                  onChange={(e) => setFormData((p) => ({ ...p, backgroundColor: e.target.value }))}
+                  placeholder="#3B82F6 또는 blue"
+                  className="flex-1"
+                />
+              </div>
+              <p className="mt-1 text-xs text-gray-500">이미지가 없을 때 배경색으로 표시됩니다</p>
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium">링크 URL</label>
@@ -190,11 +257,48 @@ export default function AdminBannersPage() {
                 {editingId === banner.id ? (
                   <div className="space-y-4">
                     <div>
-                      <label className="mb-1 block text-sm font-medium">이미지 URL *</label>
-                      <Input
+                      <label className="mb-2 block text-sm font-medium">배너 이미지 *</label>
+                      <ImageUpload
                         value={formData.imageUrl}
-                        onChange={(e) => setFormData((p) => ({ ...p, imageUrl: e.target.value }))}
+                        onChange={(url) => setFormData((p) => ({ ...p, imageUrl: url }))}
+                        onRemove={() => setFormData((p) => ({ ...p, imageUrl: '' }))}
                       />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="mb-1 block text-sm font-medium">배너 제목</label>
+                        <Input
+                          value={formData.title}
+                          onChange={(e) => setFormData((p) => ({ ...p, title: e.target.value }))}
+                          placeholder="배너 제목 (선택)"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-sm font-medium">배너 부제목</label>
+                        <Input
+                          value={formData.subtitle}
+                          onChange={(e) => setFormData((p) => ({ ...p, subtitle: e.target.value }))}
+                          placeholder="배너 부제목 (선택)"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm font-medium">배경색 (이미지가 없을 때)</label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="color"
+                          value={formData.backgroundColor || '#3B82F6'}
+                          onChange={(e) => setFormData((p) => ({ ...p, backgroundColor: e.target.value }))}
+                          className="h-10 w-20"
+                        />
+                        <Input
+                          value={formData.backgroundColor}
+                          onChange={(e) => setFormData((p) => ({ ...p, backgroundColor: e.target.value }))}
+                          placeholder="#3B82F6 또는 blue"
+                          className="flex-1"
+                        />
+                      </div>
+                      <p className="mt-1 text-xs text-gray-500">이미지가 없을 때 배경색으로 표시됩니다</p>
                     </div>
                     <div>
                       <label className="mb-1 block text-sm font-medium">링크 URL</label>

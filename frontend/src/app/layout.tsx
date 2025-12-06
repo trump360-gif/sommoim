@@ -3,6 +3,7 @@ import '@/styles/globals.css';
 import { Providers } from './providers';
 import { Header } from '@/components/layout/header';
 import { LayoutWrapper } from '@/components/layout/layout-wrapper';
+import { Toaster } from '@/components/ui/sonner';
 
 export const metadata: Metadata = {
   title: '소모임 - 함께하는 즐거움',
@@ -20,6 +21,7 @@ export default function RootLayout({
         <Providers>
           <Header />
           <LayoutWrapper>{children}</LayoutWrapper>
+          <Toaster />
         </Providers>
       </body>
     </html>

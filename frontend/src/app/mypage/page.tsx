@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { usersApi, Participation, BookmarksResponse } from '@/lib/api/users';
+import { meetingsApi } from '@/lib/api/meetings';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -24,11 +25,14 @@ export default function MyPage() {
     enabled: isAuthenticated,
   });
 
-  const { data: participations } = useQuery<Participation[]>({
-    queryKey: ['my-participations'],
-    queryFn: () => usersApi.getMyParticipations(),
+  const { data: myMeetingsData } = useQuery({
+    queryKey: ['my-meetings'],
+    queryFn: () => usersApi.getMyMeetings(),
     enabled: isAuthenticated && activeTab === 'participations',
   });
+
+  const hostedMeetings = myMeetingsData?.hosted || [];
+  const participatedMeetings = myMeetingsData?.participated || [];
 
   const { data: bookmarks } = useQuery<BookmarksResponse>({
     queryKey: ['my-bookmarks'],
@@ -71,11 +75,10 @@ export default function MyPage() {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 font-medium ${
-              activeTab === tab.key
-                ? 'border-b-2 border-primary-600 text-primary-600'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
+            className={`px-4 py-2 font-medium ${activeTab === tab.key
+              ? 'border-b-2 border-primary-600 text-primary-600'
+              : 'text-gray-500 hover:text-gray-700'
+              }`}
           >
             {tab.label}
           </button>
@@ -131,30 +134,80 @@ export default function MyPage() {
       {activeTab === 'calendar' && <MyCalendar />}
 
       {activeTab === 'participations' && (
-        <div className="space-y-4">
-          {participations?.length === 0 ? (
-            <div className="py-8 text-center text-gray-500">
-              <p>참여한 모임이 없습니다</p>
-              <Link href="/meetings" className="mt-2 text-primary-600 hover:underline">
-                모임 찾아보기
-              </Link>
-            </div>
-          ) : (
-            participations?.map((p: Participation) => (
-              <Card key={p.id}>
-                <CardContent className="flex items-center justify-between p-4">
-                  <div>
-                    <Link href={`/meetings/${p.meeting.id}`} className="font-medium hover:underline">
-                      {p.meeting.title}
-                    </Link>
-                    <p className="text-sm text-gray-500">
-                      상태: {p.status === 'APPROVED' ? '승인됨' : p.status === 'PENDING' ? '대기중' : p.status}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
+        <div className="space-y-8">
+          {/* Hosted Meetings */}
+          <div>
+            <h2 className="mb-4 text-xl font-bold tracking-tight">내가 만든 모임</h2>
+            {hostedMeetings.length === 0 ? (
+              <div className="rounded-2xl bg-gray-50 py-12 text-center text-gray-500">
+                <p>만든 모임이 없습니다</p>
+                <Link href="/meetings/create" className="mt-2 inline-block text-primary-600 hover:underline">
+                  모임 만들기
+                </Link>
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {hostedMeetings.map((meeting: any) => (
+                  <Card key={meeting.id} className="overflow-hidden rounded-2xl border-0 shadow-soft transition-all hover:shadow-medium">
+                    <CardContent className="p-4">
+                      <div className="mb-2 flex items-center gap-2">
+                        <span className="rounded-full bg-primary-100 px-2.5 py-1 text-xs font-semibold text-primary-700">
+                          호스트
+                        </span>
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${meeting.status === 'RECRUITING' ? 'bg-green-100 text-green-700' :
+                            meeting.status === 'ONGOING' ? 'bg-blue-100 text-blue-700' :
+                              'bg-gray-100 text-gray-700'
+                          }`}>
+                          {meeting.status === 'RECRUITING' ? '모집중' : meeting.status === 'ONGOING' ? '진행중' : meeting.status}
+                        </span>
+                      </div>
+                      <Link href={`/meetings/${meeting.id}`} className="block">
+                        <h3 className="mb-1 font-semibold text-gray-900 hover:text-primary-600">{meeting.title}</h3>
+                        <p className="line-clamp-2 text-sm text-gray-600">{meeting.description}</p>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Participated Meetings */}
+          <div>
+            <h2 className="mb-4 text-xl font-bold tracking-tight">참여 중인 모임</h2>
+            {participatedMeetings.length === 0 ? (
+              <div className="rounded-2xl bg-gray-50 py-12 text-center text-gray-500">
+                <p>참여한 모임이 없습니다</p>
+                <Link href="/meetings" className="mt-2 inline-block text-primary-600 hover:underline">
+                  모임 찾아보기
+                </Link>
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {participatedMeetings.map((p: any) => (
+                  <Card key={p.id} className="overflow-hidden rounded-2xl border-0 shadow-soft transition-all hover:shadow-medium">
+                    <CardContent className="p-4">
+                      <div className="mb-2 flex items-center gap-2">
+                        <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-700">
+                          멤버
+                        </span>
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${p.status === 'APPROVED' ? 'bg-green-100 text-green-700' :
+                            p.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-gray-100 text-gray-700'
+                          }`}>
+                          {p.status === 'APPROVED' ? '승인됨' : p.status === 'PENDING' ? '대기중' : p.status}
+                        </span>
+                      </div>
+                      <Link href={`/meetings/${p.meeting.id}`} className="block">
+                        <h3 className="mb-1 font-semibold text-gray-900 hover:text-primary-600">{p.meeting.title}</h3>
+                        <p className="line-clamp-2 text-sm text-gray-600">{p.meeting.description}</p>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 

@@ -1,7 +1,11 @@
 'use client';
 
+// ================================
+// Imports
+// ================================
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { adminApi, Report } from '@/lib/api/admin';
 import { Card, CardContent } from '@/components/ui/card';
@@ -37,9 +41,18 @@ export default function AdminReportsPage() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: string }) => adminApi.updateReport(id, status),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['admin-reports'] });
+      const statusLabels: Record<string, string> = {
+        PROCESSING: '처리중으로',
+        RESOLVED: '해결됨으로',
+        REJECTED: '반려됨으로',
+      };
+      toast.success(`신고가 ${statusLabels[variables.status] || ''} 변경되었습니다`);
       setSelectedReport(null);
+    },
+    onError: () => {
+      toast.error('신고 처리에 실패했습니다');
     },
   });
 

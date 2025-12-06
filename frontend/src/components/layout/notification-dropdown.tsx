@@ -52,6 +52,7 @@ export function NotificationDropdown() {
     mutationFn: notificationsApi.markAsRead,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread'] });
     },
   });
 
@@ -59,6 +60,7 @@ export function NotificationDropdown() {
     mutationFn: notificationsApi.markAllAsRead,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread'] });
     },
   });
 

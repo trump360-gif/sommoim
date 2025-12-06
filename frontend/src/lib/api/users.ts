@@ -31,6 +31,8 @@ export interface Participation {
   meeting: {
     id: string;
     title: string;
+    description: string;
+    hostId: string;
   };
 }
 
@@ -63,6 +65,35 @@ export const usersApi = {
 
   getMyParticipations: (status?: string) =>
     api.get<Participation[]>('/users/me/participations', { params: { status } }),
+
+  getMyMeetings: () =>
+    api.get<{
+      hosted: Array<{
+        id: string;
+        title: string;
+        description: string;
+        category: string;
+        status: string;
+        imageUrl?: string;
+        maxParticipants: number;
+        role: 'HOST';
+        participantStatus: 'APPROVED';
+        _count: { participants: number };
+      }>;
+      participated: Array<{
+        id: string;
+        title: string;
+        description: string;
+        category: string;
+        status: string;
+        imageUrl?: string;
+        maxParticipants: number;
+        hostId: string;
+        role: 'MEMBER';
+        participantStatus: string;
+        _count: { participants: number };
+      }>;
+    }>('/users/me/meetings'),
 
   // 차단
   blockUser: (id: string) => api.post(`/users/${id}/block`),

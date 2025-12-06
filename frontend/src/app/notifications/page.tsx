@@ -44,17 +44,26 @@ export default function NotificationsPage() {
 
   const markAsReadMutation = useMutation({
     mutationFn: notificationsApi.markAsRead,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread'] });
+    },
   });
 
   const markAllAsReadMutation = useMutation({
     mutationFn: notificationsApi.markAllAsRead,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread'] });
+    },
   });
 
   const deleteMutation = useMutation({
     mutationFn: notificationsApi.delete,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread'] });
+    },
   });
 
   if (!isAuthenticated) {
@@ -114,9 +123,8 @@ export default function NotificationsPage() {
           {notifications.map((notification: Notification) => (
             <Card
               key={notification.id}
-              className={`cursor-pointer transition-colors hover:bg-gray-50 ${
-                !notification.isRead ? 'border-l-4 border-l-primary-500 bg-primary-50' : ''
-              }`}
+              className={`cursor-pointer transition-colors hover:bg-gray-50 ${!notification.isRead ? 'border-l-4 border-l-primary-500 bg-primary-50' : ''
+                }`}
               onClick={() => handleClick(notification)}
             >
               <CardContent className="p-4">

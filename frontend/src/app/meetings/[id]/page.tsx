@@ -10,6 +10,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Image from 'next/image';
 import { meetingsApi } from '@/lib/api/meetings';
 import { reviewsApi } from '@/lib/api/reviews';
+import { getSampleMeetingImage } from '@/lib/sample-images';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { SimpleTabs as Tabs } from '@/components/ui/tabs';
@@ -232,7 +233,7 @@ function MeetingHeader({ meeting }: { meeting: any }) {
       {meeting.imageUrl ? (
         <Image src={meeting.imageUrl} alt={meeting.title} fill className="object-cover" />
       ) : (
-        <div className="flex h-full items-center justify-center text-gray-400">이미지 없음</div>
+        <Image src={getSampleMeetingImage(meeting.category)} alt={meeting.title} fill className="object-cover" />
       )}
       <div className="absolute left-4 top-4 flex gap-2">
         <span className="rounded-full bg-primary-600 px-3 py-1 text-sm text-white">

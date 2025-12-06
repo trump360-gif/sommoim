@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { usersApi, Profile } from '@/lib/api/users';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { getSampleAvatar } from '@/lib/sample-images';
 
 const REPORT_REASONS = [
   { value: 'HARASSMENT', label: '괴롭힘' },
@@ -75,54 +76,62 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
   const isOwnProfile = user?.id === id;
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-4">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gray-200 text-2xl">
+    <div className="mx-auto max-w-4xl px-4 py-8">
+      <Card className="overflow-hidden rounded-2xl border-0 shadow-medium">
+        <div className="relative h-32 bg-gradient-to-br from-primary-500 to-primary-700">
+          <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
+        </div>
+        <CardHeader className="relative -mt-16 pb-6">
+          <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-end">
+            <div className="relative h-32 w-32 overflow-hidden rounded-2xl border-4 border-white bg-gradient-to-br from-gray-100 to-gray-200 shadow-xl">
               {profile.profile?.avatarUrl ? (
-                <img src={profile.profile.avatarUrl} alt="" className="h-full w-full rounded-full object-cover" />
+                <img src={profile.profile.avatarUrl} alt="" className="h-full w-full object-cover" />
               ) : (
-                profile.nickname.charAt(0)
+                <img src={getSampleAvatar()} alt="" className="h-full w-full object-cover" />
               )}
             </div>
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold">{profile.nickname}</h1>
-              {profile.profile?.bio && <p className="mt-1 text-gray-600">{profile.profile.bio}</p>}
+            <div className="flex-1 text-center sm:text-left">
+              <h1 className="text-3xl font-bold tracking-tight text-gray-900">{profile.nickname}</h1>
+              {profile.profile?.bio && <p className="mt-2 text-gray-600">{profile.profile.bio}</p>}
             </div>
             {!isOwnProfile && user && (
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => (profile as any).isFollowing ? unfollowMutation.mutate() : followMutation.mutate()}>
+                <Button
+                  variant="outline"
+                  onClick={() => (profile as any).isFollowing ? unfollowMutation.mutate() : followMutation.mutate()}
+                  className="rounded-xl font-semibold shadow-sm transition-all hover:shadow-md"
+                >
                   {(profile as any).isFollowing ? '언팔로우' : '팔로우'}
                 </Button>
               </div>
             )}
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="flex gap-8 border-t pt-4">
+        <CardContent className="px-6 pb-6">
+          <div className="flex justify-center gap-12 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 p-6 sm:justify-start">
             <div className="text-center">
-              <p className="text-xl font-bold">{profile._count?.followers || 0}</p>
-              <p className="text-sm text-gray-500">팔로워</p>
+              <p className="text-2xl font-bold text-gray-900">{profile._count?.followers || 0}</p>
+              <p className="text-sm font-medium text-gray-500">팔로워</p>
             </div>
             <div className="text-center">
-              <p className="text-xl font-bold">{profile._count?.following || 0}</p>
-              <p className="text-sm text-gray-500">팔로잉</p>
+              <p className="text-2xl font-bold text-gray-900">{profile._count?.following || 0}</p>
+              <p className="text-sm font-medium text-gray-500">팔로잉</p>
             </div>
             <div className="text-center">
-              <p className="text-xl font-bold">{profile._count?.hostedMeetings || 0}</p>
-              <p className="text-sm text-gray-500">모임</p>
+              <p className="text-2xl font-bold text-gray-900">{profile._count?.hostedMeetings || 0}</p>
+              <p className="text-sm font-medium text-gray-500">모임</p>
             </div>
           </div>
 
           {!isOwnProfile && user && (
-            <div className="mt-6 flex gap-2 border-t pt-4">
+            <div className="mt-6 flex flex-wrap gap-2 border-t border-gray-200 pt-6">
               {(profile as any).isBlocked ? (
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => unblockMutation.mutate()}
                   disabled={unblockMutation.isPending}
+                  className="rounded-xl font-medium shadow-sm transition-all hover:shadow-md"
                 >
                   차단 해제
                 </Button>
@@ -130,7 +139,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-red-600 hover:bg-red-50"
+                  className="rounded-xl font-medium text-red-600 shadow-sm transition-all hover:bg-red-50 hover:shadow-md"
                   onClick={() => {
                     if (confirm('이 사용자를 차단하시겠습니까?\n차단하면 서로의 모임과 채팅을 볼 수 없습니다.')) {
                       blockMutation.mutate();
@@ -144,7 +153,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
               <Button
                 variant="outline"
                 size="sm"
-                className="text-red-600 hover:bg-red-50"
+                className="rounded-xl font-medium text-red-600 shadow-sm transition-all hover:bg-red-50 hover:shadow-md"
                 onClick={() => setShowReportModal(true)}
               >
                 신고
@@ -155,23 +164,22 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
       </Card>
 
       {showReportModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-md rounded-lg bg-white p-6">
-            <h2 className="mb-4 text-xl font-bold">사용자 신고</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md animate-scale-in rounded-2xl bg-white p-6 shadow-xl">
+            <h2 className="mb-6 text-2xl font-bold tracking-tight">사용자 신고</h2>
             <div className="space-y-4">
               <div>
-                <label className="mb-2 block text-sm font-medium">신고 사유 *</label>
+                <label className="mb-3 block text-sm font-semibold text-gray-700">신고 사유 *</label>
                 <div className="flex flex-wrap gap-2">
                   {REPORT_REASONS.map((r) => (
                     <button
                       key={r.value}
                       type="button"
                       onClick={() => setReportReason(r.value)}
-                      className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                        reportReason === r.value
-                          ? 'bg-red-600 text-white'
+                      className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${reportReason === r.value
+                          ? 'bg-red-600 text-white shadow-md'
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
+                        }`}
                     >
                       {r.label}
                     </button>
@@ -179,27 +187,27 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
                 </div>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">상세 설명</label>
+                <label className="mb-2 block text-sm font-semibold text-gray-700">상세 설명</label>
                 <textarea
                   value={reportDesc}
                   onChange={(e) => setReportDesc(e.target.value)}
-                  className="w-full rounded-md border px-3 py-2"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                   rows={3}
                   placeholder="신고 사유를 자세히 설명해주세요"
                 />
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-3 pt-2">
                 <Button
                   onClick={() => reportMutation.mutate()}
                   disabled={!reportReason || reportMutation.isPending}
-                  className="flex-1"
+                  className="flex-1 rounded-xl bg-red-600 font-semibold shadow-sm hover:bg-red-700"
                 >
                   {reportMutation.isPending ? '제출 중...' : '신고하기'}
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => setShowReportModal(false)}
-                  className="flex-1"
+                  className="flex-1 rounded-xl font-semibold shadow-sm"
                 >
                   취소
                 </Button>

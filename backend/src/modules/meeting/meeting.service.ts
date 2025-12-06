@@ -22,7 +22,7 @@ import { MeetingStatus, Prisma, ParticipantStatus } from '@prisma/client';
 
 @Injectable()
 export class MeetingService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   // ================================
   // Create
@@ -90,6 +90,7 @@ export class MeetingService {
       ...(q.category && { category: q.category }),
       ...(q.location && { location: { contains: q.location, mode: 'insensitive' } }),
       ...(q.status && { status: q.status }),
+      ...(q.hostId && { hostId: q.hostId }),
       ...this.dateFilter(q.startDate, q.endDate),
     };
   }

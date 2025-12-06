@@ -35,6 +35,10 @@ export class MeetingQueryDto {
   status?: MeetingStatus;
 
   @IsOptional()
+  @IsString()
+  hostId?: string;
+
+  @IsOptional()
   @IsDateString()
   startDate?: string;
 

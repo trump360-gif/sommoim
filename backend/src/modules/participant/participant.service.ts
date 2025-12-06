@@ -10,7 +10,7 @@ import { ParticipantStatus, MeetingStatus } from '@prisma/client';
 
 @Injectable()
 export class ParticipantService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async apply(meetingId: string, userId: string) {
     const meeting = await this.getMeetingWithCount(meetingId);
@@ -214,7 +214,22 @@ export class ParticipantService {
   async findMyParticipations(userId: string, status?: ParticipantStatus) {
     return this.prisma.participant.findMany({
       where: { userId, ...(status && { status }) },
-      include: { meeting: this.meetingInclude() },
+      include: {
+        meeting: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            hostId: true,
+            status: true,
+            category: true,
+            imageUrl: true,
+            maxParticipants: true,
+            host: { select: { id: true, nickname: true } },
+            schedules: { orderBy: { startTime: 'asc' as const }, take: 1 },
+          }
+        }
+      },
       orderBy: { createdAt: 'desc' },
     });
   }

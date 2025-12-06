@@ -73,34 +73,6 @@ function HeroFields({ formData, setFormData, isCompact }: SectionFormFieldsProps
         placeholder="부제목"
       />
 
-      {/* Button 1 */}
-      <div className="grid grid-cols-2 gap-2">
-        <Input
-          value={formData.layoutJson.buttonText || ''}
-          onChange={(e) => setFormData((p) => ({ ...p, layoutJson: { ...p.layoutJson, buttonText: e.target.value } }))}
-          placeholder="버튼1 텍스트"
-        />
-        <Input
-          value={formData.layoutJson.buttonLink || ''}
-          onChange={(e) => setFormData((p) => ({ ...p, layoutJson: { ...p.layoutJson, buttonLink: e.target.value } }))}
-          placeholder="버튼1 링크"
-        />
-      </div>
-
-      {/* Button 2 */}
-      <div className="grid grid-cols-2 gap-2">
-        <Input
-          value={formData.layoutJson.secondButtonText || ''}
-          onChange={(e) => setFormData((p) => ({ ...p, layoutJson: { ...p.layoutJson, secondButtonText: e.target.value } }))}
-          placeholder="버튼2 텍스트"
-        />
-        <Input
-          value={formData.layoutJson.secondButtonLink || ''}
-          onChange={(e) => setFormData((p) => ({ ...p, layoutJson: { ...p.layoutJson, secondButtonLink: e.target.value } }))}
-          placeholder="버튼2 링크"
-        />
-      </div>
-
       {/* Colors */}
       <div className="grid grid-cols-2 gap-2">
         <ColorInput

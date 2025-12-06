@@ -9,6 +9,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { UserService } from './user.service';
+import { UserMeetingService } from './user-meeting.service';
 import { MeetingCalendarService } from '../meeting/meeting-calendar.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { CalendarQueryDto } from '../meeting/dto';
@@ -18,8 +19,9 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 export class UserController {
   constructor(
     private readonly userService: UserService,
+    private readonly userMeetingService: UserMeetingService,
     private readonly calendarService: MeetingCalendarService,
-  ) {}
+  ) { }
 
   @Get('me')
   getProfile(@CurrentUser('id') userId: string) {
@@ -43,6 +45,11 @@ export class UserController {
     @Query('limit') limit = 10,
   ) {
     return this.userService.getMyBookmarks(userId, +page, +limit);
+  }
+
+  @Get('me/meetings')
+  getMyMeetings(@CurrentUser('id') userId: string) {
+    return this.userMeetingService.getMyMeetings(userId);
   }
 
   @Get('me/blocked')

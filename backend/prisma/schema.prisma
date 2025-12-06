@@ -546,10 +546,17 @@ model PageSection {
 
 model Banner {
   id          String   @id @default(cuid())
-  imageUrl    String
+  imageUrl    String?
   linkUrl     String?
   order       Int
   isActive    Boolean  @default(true)
+
+  // 텍스트 오버레이
+  title       String?
+  subtitle    String?
+  
+  // 배경색 (이미지가 없을 때 사용)
+  backgroundColor String?
 
   startDate   DateTime?
   endDate     DateTime?
@@ -561,6 +568,7 @@ model Banner {
   @@index([order])
   @@index([isActive])
 }
+
 
 model CategoryEntity {
   id          String  @id @default(cuid())

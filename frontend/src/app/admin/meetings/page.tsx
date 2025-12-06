@@ -1,8 +1,12 @@
 'use client';
 
+// ================================
+// Imports
+// ================================
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { adminApi } from '@/lib/api/admin';
 import { Card, CardContent } from '@/components/ui/card';
@@ -36,7 +40,11 @@ export default function AdminMeetingsPage() {
     mutationFn: (id: string) => adminApi.deleteMeeting(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-meetings'] });
+      toast.success('모임이 삭제되었습니다');
       setSelectedMeeting(null);
+    },
+    onError: () => {
+      toast.error('모임 삭제에 실패했습니다');
     },
   });
 

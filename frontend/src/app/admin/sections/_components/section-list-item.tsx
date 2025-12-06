@@ -1,9 +1,7 @@
-// ================================
-// Types & Interfaces
-// ================================
-
 'use client';
 
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { PageSection } from '@/lib/api/admin';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,8 +10,6 @@ import { FormData, SECTION_TYPES } from './types';
 
 interface SectionListItemProps {
   section: PageSection;
-  index: number;
-  totalCount: number;
   isEditing: boolean;
   formData: FormData;
   setFormData: React.Dispatch<React.SetStateAction<FormData>>;
@@ -21,19 +17,11 @@ interface SectionListItemProps {
   onCancelEdit: () => void;
   onSave: () => void;
   onDelete: () => void;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
   isSaving: boolean;
 }
 
-// ================================
-// Component
-// ================================
-
 export function SectionListItem({
   section,
-  index,
-  totalCount,
   isEditing,
   formData,
   setFormData,
@@ -41,40 +29,48 @@ export function SectionListItem({
   onCancelEdit,
   onSave,
   onDelete,
-  onMoveUp,
-  onMoveDown,
   isSaving,
 }: SectionListItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: section.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
   return (
-    <Card className={!section.isActive ? 'opacity-50' : ''}>
-      <CardContent className="flex items-center justify-between py-4">
-        {isEditing ? (
-          <EditingView
-            formData={formData}
-            setFormData={setFormData}
-            onSave={onSave}
-            onCancel={onCancelEdit}
-            isSaving={isSaving}
-          />
-        ) : (
-          <DisplayView
-            section={section}
-            index={index}
-            totalCount={totalCount}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            onMoveUp={onMoveUp}
-            onMoveDown={onMoveDown}
-          />
-        )}
-      </CardContent>
-    </Card>
+    <div ref={setNodeRef} style={style}>
+      <Card className={!section.isActive ? 'opacity-50' : ''}>
+        <CardContent className="flex items-center justify-between py-4">
+          {isEditing ? (
+            <EditingView
+              formData={formData}
+              setFormData={setFormData}
+              onSave={onSave}
+              onCancel={onCancelEdit}
+              isSaving={isSaving}
+            />
+          ) : (
+            <DisplayView
+              section={section}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              dragHandleProps={{ ...attributes, ...listeners }}
+            />
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }
-
-// ================================
-// Editing View
-// ================================
 
 interface EditingViewProps {
   formData: FormData;
@@ -109,38 +105,43 @@ function EditingView({ formData, setFormData, onSave, onCancel, isSaving }: Edit
   );
 }
 
-// ================================
-// Display View
-// ================================
-
 interface DisplayViewProps {
   section: PageSection;
-  index: number;
-  totalCount: number;
   onEdit: () => void;
   onDelete: () => void;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
+  dragHandleProps: any;
 }
 
 function DisplayView({
   section,
-  index,
-  totalCount,
   onEdit,
   onDelete,
-  onMoveUp,
-  onMoveDown,
+  dragHandleProps,
 }: DisplayViewProps) {
   return (
     <>
       <div className="flex items-center gap-4">
-        <ReorderButtons
-          index={index}
-          totalCount={totalCount}
-          onMoveUp={onMoveUp}
-          onMoveDown={onMoveDown}
-        />
+        <div
+          {...dragHandleProps}
+          className="cursor-grab active:cursor-grabbing touch-none p-2 text-gray-400 hover:text-gray-600"
+          title="드래그하여 순서 변경"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </div>
         <div>
           <span className="mr-2 rounded bg-gray-100 px-2 py-1 text-sm">
             {SECTION_TYPES.find((t) => t.value === section.type)?.label || section.type}
@@ -167,37 +168,5 @@ function DisplayView({
         </Button>
       </div>
     </>
-  );
-}
-
-// ================================
-// Reorder Buttons
-// ================================
-
-interface ReorderButtonsProps {
-  index: number;
-  totalCount: number;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
-}
-
-function ReorderButtons({ index, totalCount, onMoveUp, onMoveDown }: ReorderButtonsProps) {
-  return (
-    <div className="flex flex-col gap-1">
-      <button
-        onClick={onMoveUp}
-        disabled={index === 0}
-        className="text-gray-400 hover:text-gray-600 disabled:opacity-30"
-      >
-        ▲
-      </button>
-      <button
-        onClick={onMoveDown}
-        disabled={index === totalCount - 1}
-        className="text-gray-400 hover:text-gray-600 disabled:opacity-30"
-      >
-        ▼
-      </button>
-    </div>
   );
 }

@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { AdminSidebar, AdminHeader, MobileSidebar } from '@/components/admin';
 
 export default function AdminLayout({
   children,
@@ -11,6 +12,7 @@ export default function AdminLayout({
 }) {
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!isLoading) {
@@ -34,5 +36,24 @@ export default function AdminLayout({
     return null;
   }
 
-  return <>{children}</>;
+  return (
+    <div className="flex min-h-screen bg-gray-50">
+      {/* Desktop Sidebar */}
+      <AdminSidebar />
+
+      {/* Mobile Sidebar */}
+      <MobileSidebar
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
+      />
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col">
+        <AdminHeader onMenuClick={() => setIsMobileMenuOpen(true)} />
+        <main className="flex-1 p-4 lg:p-8">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
 }

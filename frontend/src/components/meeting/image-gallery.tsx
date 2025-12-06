@@ -48,6 +48,7 @@ export function ImageGallery({ images, onDelete, canDelete = false }: ImageGalle
               src={image.imageUrl}
               alt={image.caption || `이미지 ${idx + 1}`}
               fill
+              sizes="(max-width: 640px) 33vw, (max-width: 768px) 25vw, 20vw"
               className="object-cover transition-transform group-hover:scale-105"
             />
             {canDelete && onDelete && (
@@ -77,6 +78,7 @@ export function ImageGallery({ images, onDelete, canDelete = false }: ImageGalle
                 src={images[selectedIndex].imageUrl}
                 alt={images[selectedIndex].caption || '이미지'}
                 fill
+                sizes="(max-width: 1024px) 100vw, 896px"
                 className="object-contain"
               />
             </div>

@@ -6,6 +6,7 @@ export interface MeetingQueryParams {
   category?: Category;
   location?: string;
   status?: MeetingStatus;
+  hostId?: string;
   startDate?: string;
   endDate?: string;
   sort?: 'latest' | 'popular' | 'rating' | 'deadline';
