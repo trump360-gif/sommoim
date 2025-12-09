@@ -73,7 +73,7 @@ export function AdminSidebar() {
                     </div>
                     <div>
                         <h1 className="text-lg font-bold tracking-tight">소모임</h1>
-                        <p className="text-[10px] font-medium tracking-widest text-gray-500">ADMIN</p>
+                        <p className="text-[10px] font-medium tracking-widest text-gray-500">관리자</p>
                     </div>
                 </Link>
             </div>

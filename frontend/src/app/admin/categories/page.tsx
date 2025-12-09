@@ -39,10 +39,15 @@ export default function AdminCategoriesPage() {
     enabled: isAuthenticated && user?.role === 'ADMIN',
   });
 
+  const invalidateCategoryQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
+    queryClient.invalidateQueries({ queryKey: ['public', 'categories'] });
+  };
+
   const createMutation = useMutation({
     mutationFn: adminApi.createCategory,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
+      invalidateCategoryQueries();
       setIsCreating(false);
       resetForm();
     },
@@ -51,7 +56,7 @@ export default function AdminCategoriesPage() {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<CategoryEntity> }) => adminApi.updateCategory(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
+      invalidateCategoryQueries();
       setEditingId(null);
       resetForm();
     },
@@ -59,7 +64,7 @@ export default function AdminCategoriesPage() {
 
   const deleteMutation = useMutation({
     mutationFn: adminApi.deleteCategory,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-categories'] }),
+    onSuccess: () => invalidateCategoryQueries(),
   });
 
   const resetForm = () => setFormData({ name: '', icon: '⚽', color: '#3b82f6', order: 0, isActive: true });

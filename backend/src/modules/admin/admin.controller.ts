@@ -23,6 +23,12 @@ export class AdminController {
   }
 
   @Public()
+  @Post('public/banners/:id/click')
+  trackBannerClick(@Param('id') id: string) {
+    return this.adminService.trackBannerClick(id);
+  }
+
+  @Public()
   @Get('public/categories')
   getPublicCategories() {
     return this.adminService.getPublicCategories();
@@ -44,6 +50,11 @@ export class AdminController {
     return this.adminService.createSection(dto);
   }
 
+  @Put('page-sections/reorder')
+  reorderSections(@Body() dto: ReorderDto) {
+    return this.adminService.reorderSections(dto);
+  }
+
   @Put('page-sections/:id')
   updateSection(@Param('id') id: string, @Body() dto: Partial<CreateSectionDto>) {
     return this.adminService.updateSection(id, dto);
@@ -52,11 +63,6 @@ export class AdminController {
   @Delete('page-sections/:id')
   deleteSection(@Param('id') id: string) {
     return this.adminService.deleteSection(id);
-  }
-
-  @Put('page-sections/reorder')
-  reorderSections(@Body() dto: ReorderDto) {
-    return this.adminService.reorderSections(dto);
   }
 
   // 배너

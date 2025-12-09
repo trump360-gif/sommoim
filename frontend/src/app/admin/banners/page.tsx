@@ -32,10 +32,15 @@ export default function AdminBannersPage() {
     enabled: isAuthenticated && user?.role === 'ADMIN',
   });
 
+  const invalidateBannerQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ['admin-banners'] });
+    queryClient.invalidateQueries({ queryKey: ['public', 'banners'] });
+  };
+
   const createMutation = useMutation({
     mutationFn: adminApi.createBanner,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-banners'] });
+      invalidateBannerQueries();
       setIsCreating(false);
       resetForm();
     },
@@ -44,7 +49,7 @@ export default function AdminBannersPage() {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<Banner> }) => adminApi.updateBanner(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-banners'] });
+      invalidateBannerQueries();
       setEditingId(null);
       resetForm();
     },
@@ -52,7 +57,7 @@ export default function AdminBannersPage() {
 
   const deleteMutation = useMutation({
     mutationFn: adminApi.deleteBanner,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-banners'] }),
+    onSuccess: () => invalidateBannerQueries(),
   });
 
   const resetForm = () => setFormData({
@@ -67,10 +72,11 @@ export default function AdminBannersPage() {
     endDate: ''
   });
 
-  const buildBannerData = (): Omit<Banner, 'id' | 'clickCount' | 'createdAt' | 'updatedAt'> => ({
+  const buildBannerData = (isUpdate = false): Omit<Banner, 'id' | 'clickCount' | 'createdAt' | 'updatedAt'> => ({
     order: formData.order,
     isActive: formData.isActive,
-    imageUrl: formData.imageUrl || undefined,
+    // 수정 시 이미지가 비어있으면 null로 보내서 명시적으로 삭제
+    imageUrl: formData.imageUrl || (isUpdate ? null : undefined),
     linkUrl: formData.linkUrl || undefined,
     title: formData.title || undefined,
     subtitle: formData.subtitle || undefined,
@@ -84,7 +90,7 @@ export default function AdminBannersPage() {
   };
 
   const handleUpdate = (id: string) => {
-    updateMutation.mutate({ id, data: buildBannerData() });
+    updateMutation.mutate({ id, data: buildBannerData(true) });
   };
 
   const startEdit = (banner: Banner) => {

@@ -144,6 +144,7 @@ export const adminApi = {
   getPublicSections: () => api.get<PageSection[]>('/admin/public/sections'),
   getPublicBanners: () => api.get<Banner[]>('/admin/public/banners'),
   getPublicCategories: () => api.get<CategoryEntity[]>('/admin/public/categories'),
+  trackBannerClick: (id: string) => api.post(`/admin/public/banners/${id}/click`),
 
   // 파일 관리
   getFiles: (page = 1, limit = 20, entityType?: string) =>

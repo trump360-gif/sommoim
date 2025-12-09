@@ -49,10 +49,17 @@ export class AdminService {
     return this.prisma.banner.create({ data: dto });
   }
 
-  async updateBanner(id: string, dto: Partial<CreateBannerDto>) {
+  async updateBanner(id: string, dto: Partial<CreateBannerDto> & { imageUrl?: string | null }) {
     const banner = await this.prisma.banner.findUnique({ where: { id } });
     if (!banner) throw new NotFoundException('배너를 찾을 수 없습니다');
-    return this.prisma.banner.update({ where: { id }, data: dto });
+
+    // imageUrl이 빈 문자열이면 null로 변환 (이미지 제거)
+    const data: Record<string, unknown> = { ...dto };
+    if (data.imageUrl === '' || data.imageUrl === null) {
+      data.imageUrl = null;
+    }
+
+    return this.prisma.banner.update({ where: { id }, data });
   }
 
   async deleteBanner(id: string) {
@@ -86,6 +93,14 @@ export class AdminService {
       },
       orderBy: { order: 'asc' },
     });
+  }
+
+  async trackBannerClick(id: string) {
+    await this.prisma.banner.update({
+      where: { id },
+      data: { clickCount: { increment: 1 } },
+    });
+    return { success: true };
   }
 
   async getPublicCategories() {

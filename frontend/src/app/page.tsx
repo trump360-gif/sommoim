@@ -1,289 +1,311 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { useQuery } from '@tanstack/react-query';
 import { meetingsApi, RecommendedMeeting } from '@/lib/api/meetings';
 import { adminApi, type Banner, type CategoryEntity, type PageSection } from '@/lib/api/admin';
 import { MeetingCard } from '@/components/meeting/meeting-card';
+import { BannerCarousel, BannerCarouselSkeleton } from '@/components/home/BannerCarousel';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { Sparkles } from 'lucide-react';
 import type { Meeting, PaginatedResponse } from '@/types';
 
+// ================================
+// Types & Interfaces
+// ================================
+
 const DEFAULT_CATEGORIES = [
-  { key: 'SPORTS', label: '운동', icon: '⚽', color: 'bg-green-500' },
-  { key: 'GAMES', label: '게임', icon: '🎮', color: 'bg-purple-500' },
-  { key: 'FOOD', label: '음식', icon: '🍔', color: 'bg-orange-500' },
-  { key: 'CULTURE', label: '문화', icon: '🎨', color: 'bg-pink-500' },
-  { key: 'TRAVEL', label: '여행', icon: '✈️', color: 'bg-blue-500' },
-  { key: 'STUDY', label: '스터디', icon: '📚', color: 'bg-yellow-500' },
+    { key: 'SPORTS', label: '운동', icon: '⚽', color: 'bg-green-500' },
+    { key: 'GAMES', label: '게임', icon: '🎮', color: 'bg-purple-500' },
+    { key: 'FOOD', label: '음식', icon: '🍔', color: 'bg-orange-500' },
+    { key: 'CULTURE', label: '문화', icon: '🎨', color: 'bg-pink-500' },
+    { key: 'TRAVEL', label: '여행', icon: '✈️', color: 'bg-blue-500' },
+    { key: 'STUDY', label: '스터디', icon: '📚', color: 'bg-yellow-500' },
 ];
 
 interface HeroLayout {
-  subtitle?: string;
-  buttonText?: string;
-  buttonLink?: string;
-  secondButtonText?: string;
-  secondButtonLink?: string;
-  bgColor?: string;
-  bgColorEnd?: string;
-  bgImage?: string;
+    subtitle?: string;
+    buttonText?: string;
+    buttonLink?: string;
+    secondButtonText?: string;
+    secondButtonLink?: string;
+    bgColor?: string;
+    bgColorEnd?: string;
+    bgImage?: string;
 }
 
-export default function HomePage() {
-  const { isAuthenticated } = useAuth();
+interface MeetingsLayout {
+    sort?: 'popular' | 'latest';
+    limit?: number;
+}
 
-  const { data: sections } = useQuery<PageSection[]>({
-    queryKey: ['public', 'sections'],
-    queryFn: () => adminApi.getPublicSections(),
-  });
+// ================================
+// Section Components
+// ================================
 
-  const { data: banners } = useQuery<Banner[]>({
-    queryKey: ['public', 'banners'],
-    queryFn: () => adminApi.getPublicBanners(),
-  });
+function HeroSection({ section }: { section: PageSection }) {
+    const heroLayout = (section.layoutJson || {}) as HeroLayout;
 
-  const { data: adminCategories } = useQuery<CategoryEntity[]>({
-    queryKey: ['public', 'categories'],
-    queryFn: () => adminApi.getPublicCategories(),
-  });
-
-  const { data: recommendedMeetings } = useQuery<RecommendedMeeting[]>({
-    queryKey: ['meetings', 'recommended'],
-    queryFn: () => meetingsApi.getRecommended(4),
-    enabled: isAuthenticated,
-  });
-
-  const { data: latestMeetings } = useQuery<PaginatedResponse<Meeting>>({
-    queryKey: ['meetings', 'latest'],
-    queryFn: () => meetingsApi.getAll({ limit: 4, sort: 'latest', status: 'RECRUITING' }),
-  });
-
-  const { data: popularMeetings } = useQuery<PaginatedResponse<Meeting>>({
-    queryKey: ['meetings', 'popular'],
-    queryFn: () => meetingsApi.getAll({ limit: 4, sort: 'popular', status: 'RECRUITING' }),
-  });
-
-  const heroSection = sections?.find((s) => s.type === 'hero');
-  const heroLayout = (heroSection?.layoutJson || {}) as HeroLayout;
-
-  const categories = adminCategories?.length
-    ? adminCategories.map((cat) => ({
-      key: cat.name.toUpperCase(),
-      label: cat.name,
-      icon: cat.icon || '📌',
-      color: cat.color || null,
-    }))
-    : DEFAULT_CATEGORIES;
-
-  return (
-    <div className="min-h-screen">
-      {/* Banner Section */}
-      {banners && banners.length > 0 && (
-        <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {banners.slice(0, 3).map((banner, index) => {
-              const bannerContent = (
-                <>
-                  {banner.imageUrl ? (
-                    <Image
-                      src={banner.imageUrl}
-                      alt={banner.title || '배너'}
-                      fill
-                      priority={index === 0}
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    />
-                  ) : (
-                    <div
-                      className="absolute inset-0"
-                      style={{ backgroundColor: banner.backgroundColor || '#6366f1' }}
-                    />
-                  )}
-
-                  {(banner.title || banner.subtitle) && (
-                    <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/60 to-transparent p-6">
-                      {banner.title && (
-                        <h3 className="text-xl font-bold text-white">{banner.title}</h3>
-                      )}
-                      {banner.subtitle && (
-                        <p className="mt-1 text-sm text-white/90">{banner.subtitle}</p>
-                      )}
-                    </div>
-                  )}
-                </>
-              );
-
-              const className = "group relative aspect-[16/9] overflow-hidden rounded-2xl shadow-soft transition-all duration-300 hover:shadow-medium hover:-translate-y-1";
-
-              return banner.linkUrl ? (
-                <Link key={banner.id} href={banner.linkUrl} className={className}>
-                  {bannerContent}
-                </Link>
-              ) : (
-                <div key={banner.id} className={`${className} cursor-default`}>
-                  {bannerContent}
+    return (
+        <section
+            className="relative mx-auto max-w-7xl overflow-hidden rounded-3xl px-4 py-16 sm:px-6 lg:px-8"
+            style={{
+                background: heroLayout.bgImage
+                    ? `url(${heroLayout.bgImage}) center/cover`
+                    : `linear-gradient(135deg, ${heroLayout.bgColor || '#6366f1'} 0%, ${heroLayout.bgColorEnd || '#8b5cf6'} 100%)`,
+            }}
+        >
+            <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
+            <div className="relative z-10 mx-auto max-w-3xl text-center text-white">
+                <h1 className="mb-6 text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl">
+                    {section.title || '관심사가 같은 사람들과 함께해요'}
+                </h1>
+                <p className="mb-8 text-lg opacity-95 md:text-xl">
+                    {heroLayout.subtitle || '운동, 게임, 맛집, 여행... 다양한 모임에서 새로운 친구를 만나보세요'}
+                </p>
+                <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+                    <Link href={heroLayout.buttonLink || '/meetings'}>
+                        <Button className="w-full bg-white px-8 py-6 text-base font-semibold text-primary-600 shadow-lg transition-all hover:scale-105 hover:bg-gray-50 hover:shadow-xl sm:w-auto">
+                            {heroLayout.buttonText || '모임 찾아보기'}
+                        </Button>
+                    </Link>
+                    <Link href={heroLayout.secondButtonLink || '/meetings/create'}>
+                        <Button className="w-full border-2 border-white bg-transparent px-8 py-6 text-base font-semibold text-white shadow-lg transition-all hover:scale-105 hover:bg-white/20 sm:w-auto">
+                            {heroLayout.secondButtonText || '모임 만들기'}
+                        </Button>
+                    </Link>
                 </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* Hero Section */}
-      <section
-        className="relative mx-auto max-w-7xl overflow-hidden rounded-3xl px-4 py-16 sm:px-6 lg:px-8"
-        style={{
-          background: heroLayout.bgImage
-            ? `url(${heroLayout.bgImage}) center/cover`
-            : `linear-gradient(135deg, ${heroLayout.bgColor || '#6366f1'} 0%, ${heroLayout.bgColorEnd || '#8b5cf6'} 100%)`,
-        }}
-      >
-        <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
-        <div className="relative z-10 mx-auto max-w-3xl text-center text-white">
-          <h1 className="mb-6 text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl">
-            {heroSection?.title || '관심사가 같은 사람들과 함께해요'}
-          </h1>
-          <p className="mb-8 text-lg opacity-95 md:text-xl">
-            {heroLayout.subtitle || '운동, 게임, 맛집, 여행... 다양한 모임에서 새로운 친구를 만나보세요'}
-          </p>
-          <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-            <Link href={heroLayout.buttonLink || '/meetings'}>
-              <Button className="w-full bg-white px-8 py-6 text-base font-semibold text-primary-600 shadow-lg transition-all hover:scale-105 hover:bg-gray-50 hover:shadow-xl sm:w-auto">
-                {heroLayout.buttonText || '모임 찾아보기'}
-              </Button>
-            </Link>
-            <Link href={heroLayout.secondButtonLink || '/meetings/create'}>
-              <Button className="w-full border-2 border-white bg-transparent px-8 py-6 text-base font-semibold text-white shadow-lg transition-all hover:scale-105 hover:bg-white/20 sm:w-auto">
-                {heroLayout.secondButtonText || '모임 만들기'}
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Categories */}
-      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <h2 className="mb-8 text-3xl font-bold tracking-tight">카테고리</h2>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6">
-          {categories.map((cat) => {
-            const isHexColor = cat.color?.startsWith('#');
-            return (
-              <Link
-                key={cat.key}
-                href={`/meetings?category=${cat.key}`}
-                className="group flex flex-col items-center gap-3 rounded-2xl bg-white p-6 shadow-soft transition-all duration-300 hover:shadow-medium hover:-translate-y-1"
-              >
-                <div
-                  className={`flex h-16 w-16 items-center justify-center rounded-2xl text-3xl transition-transform duration-300 group-hover:scale-110 ${!isHexColor && cat.color ? cat.color : 'bg-gradient-to-br from-primary-400 to-primary-600'}`}
-                  style={isHexColor && cat.color ? { backgroundColor: cat.color } : undefined}
-                >
-                  {cat.icon}
-                </div>
-                <span className="text-sm font-semibold text-gray-700">{cat.label}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Recommended Meetings (for logged-in users) */}
-      {isAuthenticated && recommendedMeetings && recommendedMeetings.length > 0 && (
-        <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-          <div className="mb-8 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500">
-                <Sparkles className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <h2 className="text-3xl font-bold tracking-tight">맞춤 추천</h2>
-                <p className="mt-1 text-gray-600">관심사에 맞는 모임을 찾아봤어요</p>
-              </div>
             </div>
-            <Link href="/mypage/edit" className="text-sm font-semibold text-primary-600 transition-colors hover:text-primary-700">
-              관심사 설정 →
-            </Link>
-          </div>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {recommendedMeetings.map((meeting) => (
-              <div key={meeting.id} className="relative">
-                <MeetingCard meeting={meeting} />
-                {meeting.reason && meeting.reason.length > 0 && (
-                  <div className="absolute -top-2 left-3 flex flex-wrap gap-1">
-                    {meeting.reason.slice(0, 2).map((r, i) => (
-                      <span
-                        key={i}
-                        className="rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-2.5 py-0.5 text-xs font-medium text-white shadow-sm"
-                      >
-                        {r}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
         </section>
-      )}
+    );
+}
 
-      {/* Popular Meetings */}
-      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight">인기 모임</h2>
-            <p className="mt-2 text-gray-600">지금 가장 핫한 모임을 만나보세요</p>
-          </div>
-          <Link href="/meetings?sort=popular" className="text-sm font-semibold text-primary-600 transition-colors hover:text-primary-700">
-            더보기 →
-          </Link>
-        </div>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {popularMeetings?.data?.map((meeting) => (
-            <MeetingCard key={meeting.id} meeting={meeting} />
-          ))}
-          {!popularMeetings?.data?.length && (
-            <p className="col-span-full rounded-2xl bg-gray-50 py-16 text-center text-gray-500">아직 모임이 없습니다</p>
-          )}
-        </div>
-      </section>
+function CategoriesSection({
+    section,
+    categories,
+}: {
+    section: PageSection;
+    categories: Array<{ key: string; label: string; icon: string; color: string | null }>;
+}) {
+    return (
+        <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+            <h2 className="mb-8 text-3xl font-bold tracking-tight">{section.title || '카테고리'}</h2>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6">
+                {categories.map((cat) => {
+                    const isHexColor = cat.color?.startsWith('#');
+                    return (
+                        <Link
+                            key={cat.key}
+                            href={`/meetings?category=${cat.key}`}
+                            className="group flex flex-col items-center gap-3 rounded-2xl bg-white p-6 shadow-soft transition-all duration-300 hover:shadow-medium hover:-translate-y-1"
+                        >
+                            <div
+                                className={`flex h-16 w-16 items-center justify-center rounded-2xl text-3xl transition-transform duration-300 group-hover:scale-110 ${!isHexColor && cat.color ? cat.color : 'bg-gradient-to-br from-primary-400 to-primary-600'}`}
+                                style={isHexColor && cat.color ? { backgroundColor: cat.color } : undefined}
+                            >
+                                {cat.icon}
+                            </div>
+                            <span className="text-sm font-semibold text-gray-700">{cat.label}</span>
+                        </Link>
+                    );
+                })}
+            </div>
+        </section>
+    );
+}
 
-      {/* Latest Meetings */}
-      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight">최신 모임</h2>
-            <p className="mt-2 text-gray-600">새롭게 시작된 모임에 참여해보세요</p>
-          </div>
-          <Link href="/meetings?sort=latest" className="text-sm font-semibold text-primary-600 transition-colors hover:text-primary-700">
-            더보기 →
-          </Link>
-        </div>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {latestMeetings?.data?.map((meeting) => (
-            <MeetingCard key={meeting.id} meeting={meeting} />
-          ))}
-          {!latestMeetings?.data?.length && (
-            <p className="col-span-full rounded-2xl bg-gray-50 py-16 text-center text-gray-500">아직 모임이 없습니다</p>
-          )}
-        </div>
-      </section>
+function MeetingsSection({
+    section,
+    meetings,
+}: {
+    section: PageSection;
+    meetings?: Meeting[];
+}) {
+    const layout = (section.layoutJson || {}) as MeetingsLayout;
+    const sortType = layout.sort || 'popular';
+    const sortLink = sortType === 'popular' ? '/meetings?sort=popular' : '/meetings?sort=latest';
+    const subtitle = sortType === 'popular'
+        ? '지금 가장 핫한 모임을 만나보세요'
+        : '새롭게 시작된 모임에 참여해보세요';
 
-      {/* CTA */}
-      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary-600 to-primary-700 p-12 text-center shadow-xl">
-          <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
-          <div className="relative z-10">
-            <h2 className="mb-4 text-3xl font-bold text-white">나만의 모임을 시작해보세요</h2>
-            <p className="mb-8 text-lg text-white/90">관심사가 같은 사람들이 모일 수 있는 공간을 만들어보세요</p>
-            <Link href="/meetings/create">
-              <Button size="lg" className="bg-white px-8 py-6 text-base font-semibold text-primary-600 shadow-lg transition-all hover:scale-105 hover:bg-gray-50">
-                모임 만들기
-              </Button>
-            </Link>
-          </div>
+    return (
+        <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+            <div className="mb-8 flex items-center justify-between">
+                <div>
+                    <h2 className="text-3xl font-bold tracking-tight">{section.title || '모임'}</h2>
+                    <p className="mt-2 text-gray-600">{subtitle}</p>
+                </div>
+                <Link href={sortLink} className="text-sm font-semibold text-primary-600 transition-colors hover:text-primary-700">
+                    더보기 →
+                </Link>
+            </div>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                {meetings?.map((meeting) => (
+                    <MeetingCard key={meeting.id} meeting={meeting} />
+                ))}
+                {!meetings?.length && (
+                    <p className="col-span-full rounded-2xl bg-gray-50 py-16 text-center text-gray-500">아직 모임이 없습니다</p>
+                )}
+            </div>
+        </section>
+    );
+}
+
+function RecommendedSection({ meetings }: { meetings: RecommendedMeeting[] }) {
+    return (
+        <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+            <div className="mb-8 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500">
+                        <Sparkles className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                        <h2 className="text-3xl font-bold tracking-tight">맞춤 추천</h2>
+                        <p className="mt-1 text-gray-600">관심사에 맞는 모임을 찾아봤어요</p>
+                    </div>
+                </div>
+                <Link href="/mypage/edit" className="text-sm font-semibold text-primary-600 transition-colors hover:text-primary-700">
+                    관심사 설정 →
+                </Link>
+            </div>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                {meetings.map((meeting) => (
+                    <div key={meeting.id} className="relative">
+                        <MeetingCard meeting={meeting} />
+                        {meeting.reason && meeting.reason.length > 0 && (
+                            <div className="absolute -top-2 left-3 flex flex-wrap gap-1">
+                                {meeting.reason.slice(0, 2).map((r, i) => (
+                                    <span
+                                        key={i}
+                                        className="rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-2.5 py-0.5 text-xs font-medium text-white shadow-sm"
+                                    >
+                                        {r}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+        </section>
+    );
+}
+
+function FeaturedSection({ section }: { section: PageSection }) {
+    return (
+        <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary-600 to-primary-700 p-12 text-center shadow-xl">
+                <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
+                <div className="relative z-10">
+                    <h2 className="mb-4 text-3xl font-bold text-white">{section.title || '나만의 모임을 시작해보세요'}</h2>
+                    <p className="mb-8 text-lg text-white/90">관심사가 같은 사람들이 모일 수 있는 공간을 만들어보세요</p>
+                    <Link href="/meetings/create">
+                        <Button size="lg" className="bg-white px-8 py-6 text-base font-semibold text-primary-600 shadow-lg transition-all hover:scale-105 hover:bg-gray-50">
+                            모임 만들기
+                        </Button>
+                    </Link>
+                </div>
+            </div>
+        </section>
+    );
+}
+
+// ================================
+// Main Component
+// ================================
+
+export default function HomePage() {
+    const { isAuthenticated } = useAuth();
+
+    const { data: sections } = useQuery<PageSection[]>({
+        queryKey: ['public', 'sections'],
+        queryFn: () => adminApi.getPublicSections(),
+    });
+
+    const { data: banners, isLoading: bannersLoading } = useQuery<Banner[]>({
+        queryKey: ['public', 'banners'],
+        queryFn: () => adminApi.getPublicBanners(),
+    });
+
+    const handleBannerClick = (bannerId: string) => {
+        adminApi.trackBannerClick(bannerId).catch(() => { });
+    };
+
+    const { data: adminCategories } = useQuery<CategoryEntity[]>({
+        queryKey: ['public', 'categories'],
+        queryFn: () => adminApi.getPublicCategories(),
+    });
+
+    const { data: recommendedMeetings } = useQuery<RecommendedMeeting[]>({
+        queryKey: ['meetings', 'recommended'],
+        queryFn: () => meetingsApi.getRecommended(4),
+        enabled: isAuthenticated,
+    });
+
+    const { data: latestMeetings } = useQuery<PaginatedResponse<Meeting>>({
+        queryKey: ['meetings', 'latest'],
+        queryFn: () => meetingsApi.getAll({ limit: 4, sort: 'latest', status: 'RECRUITING' }),
+    });
+
+    const { data: popularMeetings } = useQuery<PaginatedResponse<Meeting>>({
+        queryKey: ['meetings', 'popular'],
+        queryFn: () => meetingsApi.getAll({ limit: 4, sort: 'popular', status: 'RECRUITING' }),
+    });
+
+    const categories = adminCategories?.length
+        ? adminCategories.map((cat) => ({
+            key: cat.name.toUpperCase(),
+            label: cat.name,
+            icon: cat.icon || '📌',
+            color: cat.color || null,
+        }))
+        : DEFAULT_CATEGORIES;
+
+    // 섹션을 order 순서대로 정렬 (이미 API에서 정렬되어 오지만 안전을 위해)
+    const sortedSections = sections?.slice().sort((a, b) => a.order - b.order) || [];
+
+    // 섹션 타입별 렌더링
+    const renderSection = (section: PageSection) => {
+        if (!section.isActive) return null;
+
+        const layout = section.layoutJson as MeetingsLayout;
+
+        switch (section.type) {
+            case 'hero':
+                return <HeroSection key={section.id} section={section} />;
+
+            case 'categories':
+                return <CategoriesSection key={section.id} section={section} categories={categories} />;
+
+            case 'meetings':
+                const sortType = layout?.sort || 'popular';
+                const meetings = sortType === 'popular' ? popularMeetings?.data : latestMeetings?.data;
+                return <MeetingsSection key={section.id} section={section} meetings={meetings} />;
+
+            case 'featured':
+                return <FeaturedSection key={section.id} section={section} />;
+
+            default:
+                return null;
+        }
+    };
+
+    return (
+        <div className="min-h-screen">
+            {/* Banner Section - 항상 최상단 */}
+            {bannersLoading && <BannerCarouselSkeleton />}
+            {!bannersLoading && banners && banners.length > 0 && (
+                <BannerCarousel banners={banners} onBannerClick={handleBannerClick} />
+            )}
+
+            {/* 섹션 순서대로 렌더링 */}
+            {sortedSections.map(renderSection)}
+
+            {/* 추천 모임 - 로그인 사용자만 (섹션과 별개로 표시) */}
+            {isAuthenticated && recommendedMeetings && recommendedMeetings.length > 0 && (
+                <RecommendedSection meetings={recommendedMeetings} />
+            )}
         </div>
-      </section>
-    </div>
-  );
+    );
 }

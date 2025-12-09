@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import '@/styles/globals.css';
 import { Providers } from './providers';
-import { Header } from '@/components/layout/header';
+import { ConditionalHeader } from '@/components/layout/conditional-header';
 import { LayoutWrapper } from '@/components/layout/layout-wrapper';
 import { Toaster } from '@/components/ui/sonner';
 
@@ -19,7 +19,7 @@ export default function RootLayout({
     <html lang="ko">
       <body className="min-h-screen bg-gray-50 antialiased">
         <Providers>
-          <Header />
+          <ConditionalHeader />
           <LayoutWrapper>{children}</LayoutWrapper>
           <Toaster />
         </Providers>

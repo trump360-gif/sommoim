@@ -13,6 +13,9 @@ import {
     Puzzle,
     Image as ImageIcon,
     Tag,
+    Settings,
+    FileText,
+    HardDrive,
     type LucideIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -36,6 +39,9 @@ function generateBreadcrumbs(pathname: string): BreadcrumbItem[] {
         'sections': '섹션',
         'banners': '배너',
         'categories': '카테고리',
+        'settings': '시스템 설정',
+        'logs': '활동 로그',
+        'files': '파일 관리',
     };
 
     paths.forEach((path, index) => {
@@ -123,6 +129,14 @@ export function MobileSidebar({
                 { label: '섹션', href: '/admin/sections', icon: Puzzle },
                 { label: '배너', href: '/admin/banners', icon: ImageIcon },
                 { label: '카테고리', href: '/admin/categories', icon: Tag },
+            ],
+        },
+        {
+            title: '시스템 관리',
+            items: [
+                { label: '시스템 설정', href: '/admin/settings', icon: Settings },
+                { label: '활동 로그', href: '/admin/logs', icon: FileText },
+                { label: '파일 관리', href: '/admin/files', icon: HardDrive },
             ],
         },
     ];

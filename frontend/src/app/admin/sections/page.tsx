@@ -28,10 +28,15 @@ export default function AdminSectionsPage() {
     enabled: isAuthenticated && user?.role === 'ADMIN',
   });
 
+  const invalidateSectionQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ['admin-sections'] });
+    queryClient.invalidateQueries({ queryKey: ['public', 'sections'] });
+  };
+
   const createMutation = useMutation({
     mutationFn: adminApi.createSection,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-sections'] });
+      invalidateSectionQueries();
       setIsCreating(false);
       resetForm();
     },
@@ -41,7 +46,7 @@ export default function AdminSectionsPage() {
     mutationFn: ({ id, data }: { id: string; data: Partial<PageSection> }) =>
       adminApi.updateSection(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-sections'] });
+      invalidateSectionQueries();
       setEditingId(null);
       resetForm();
     },
@@ -49,12 +54,12 @@ export default function AdminSectionsPage() {
 
   const deleteMutation = useMutation({
     mutationFn: adminApi.deleteSection,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-sections'] }),
+    onSuccess: () => invalidateSectionQueries(),
   });
 
   const reorderMutation = useMutation({
     mutationFn: adminApi.reorderSections,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-sections'] }),
+    onSuccess: () => invalidateSectionQueries(),
   });
 
   const sensors = useSensors(
