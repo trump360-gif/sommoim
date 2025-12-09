@@ -6,9 +6,10 @@ import { Sidebar } from './sidebar';
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAdminPage = pathname.startsWith('/admin');
+  const isMypagePage = pathname.startsWith('/mypage');
 
-  // Admin pages have their own layout with sidebar, so just return children
-  if (isAdminPage) {
+  // Admin and Mypage have their own layout with sidebar, so just return children
+  if (isAdminPage || isMypagePage) {
     return <>{children}</>;
   }
 

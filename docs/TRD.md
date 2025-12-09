@@ -1,8 +1,8 @@
-# 소모임 플랫폼 (Sommoim) - TRD v3.7
+# 소모임 플랫폼 (Sommoim) - TRD v3.8
 
 **작성일:** 2025-12-09
-**버전:** 3.7
-**상태:** 개발 진행 중 (Phase 1-7 완료)
+**버전:** 3.8
+**상태:** 개발 진행 중 (Phase 1-8 완료)
 
 ---
 
@@ -23,6 +23,7 @@
 | @dnd-kit | 6.x | 드래그앤드롭 | ✅ 구현 |
 | Sonner | 2.x | 토스트 알림 | ✅ 구현 |
 | Lucide React | - | 아이콘 | ✅ 구현 |
+| browser-image-compression | 2.x | 클라이언트 이미지 압축 | ✅ 구현 |
 
 ### 1.2 백엔드
 
@@ -371,13 +372,15 @@ model JoinAnswer {
 
 ### 4.2 구현된 API 엔드포인트 (80개+)
 
-#### 인증 (5개) ✅
+#### 인증 (7개) ✅
 ```
-POST   /api/auth/register        - 회원가입
-POST   /api/auth/login           - 로그인
-POST   /api/auth/logout          - 로그아웃
-POST   /api/auth/refresh         - 토큰 갱신
-GET    /api/auth/me              - 내 정보 조회
+POST   /api/auth/register              - 회원가입
+POST   /api/auth/login                 - 로그인
+POST   /api/auth/logout                - 로그아웃
+POST   /api/auth/refresh               - 토큰 갱신
+GET    /api/auth/me                    - 내 정보 조회
+POST   /api/auth/password-reset        - 비밀번호 재설정 요청
+POST   /api/auth/password-reset/confirm - 비밀번호 재설정 확인
 ```
 
 #### 모임 (16개) ✅
@@ -488,7 +491,7 @@ WebSocket Events:
 - message:new: 새 메시지 수신
 ```
 
-#### 관리자 (17개) ✅
+#### 관리자 (25개) ✅
 ```
 # 대시보드
 GET    /api/admin/dashboard             - 통계 조회
@@ -524,6 +527,18 @@ DELETE /api/admin/meetings/:id          - 삭제
 # 신고
 GET    /api/admin/reports               - 목록
 PUT    /api/admin/reports/:id           - 상태 변경
+
+# 파일 관리
+GET    /api/admin/files                 - 파일 목록
+GET    /api/admin/files/stats           - 파일 통계
+DELETE /api/admin/files/:id             - 파일 삭제
+
+# 활동 로그
+GET    /api/admin/logs                  - 로그 목록
+
+# 시스템 설정
+GET    /api/admin/settings              - 설정 조회
+PUT    /api/admin/settings              - 설정 저장
 ```
 
 #### 공개 API (3개) ✅
@@ -808,9 +823,16 @@ socket.on('message:new', handleNewMessage);
 - ✅ 팔로우 시스템 (팔로우/언팔로우/목록)
 - ✅ 홈페이지 맞춤 추천 섹션
 
-### Phase 8: 폴리싱 🔜 예정
+### Phase 8: 인프라 & 관리 기능 ✅ 완료
+- ✅ 비밀번호 재설정 (6자리 인증코드, 3단계 플로우)
+- ✅ 클라이언트 이미지 압축 (browser-image-compression)
+- ✅ 관리자 파일 관리 (목록/통계/삭제, 리스트/그리드 뷰)
+- ✅ 관리자 활동 로그 (액션 필터, 검색)
+- ✅ 관리자 시스템 설정 (일반/알림/보안/이메일/DB)
+- ✅ 채팅 API 경로 정규화
+
+### Phase 9: 폴리싱 🔜 예정
 - 🔜 이메일 인증
-- 🔜 비밀번호 재설정
 - 🔜 성능 최적화
 - 🔜 테스트
 - 🔜 배포
@@ -853,7 +875,7 @@ NEXT_PUBLIC_API_URL=http://localhost:3000/api
 ### 10.2 Prisma 스키마
 
 ```
-22개 모델 구현 완료:
+23개 모델 구현 완료:
 - User, Profile, Follow
 - Meeting, MeetingSchedule
 - MeetingActivity, ActivityImage
@@ -865,6 +887,7 @@ NEXT_PUBLIC_API_URL=http://localhost:3000/api
 - CategoryEntity, ActivityLog
 - RefreshToken, TokenBlacklist
 - SystemSetting, UploadedFile
+- PasswordResetToken (비밀번호 재설정)
 ```
 
 ### 10.3 프론트엔드 페이지
@@ -885,6 +908,10 @@ NEXT_PUBLIC_API_URL=http://localhost:3000/api
 | 알림 | `/notifications` | ✅ 완료 |
 | 북마크 | `/bookmarks` | ✅ 완료 |
 | 관리자 | `/admin/*` | ✅ 완료 |
+| 비밀번호 찾기 | `/auth/forgot-password` | ✅ 완료 |
+| 파일 관리 | `/admin/files` | ✅ 완료 |
+| 활동 로그 | `/admin/logs` | ✅ 완료 |
+| 시스템 설정 | `/admin/settings` | ✅ 완료 |
 
 ---
 

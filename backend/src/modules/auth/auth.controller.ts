@@ -1,7 +1,7 @@
 import { Controller, Post, Get, Body, Res, Req, HttpCode, HttpStatus } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { AuthService } from './auth.service';
-import { RegisterDto, LoginDto } from './dto';
+import { RegisterDto, LoginDto, PasswordResetRequestDto, PasswordResetConfirmDto } from './dto';
 import { Public } from './decorators/public.decorator';
 import { CurrentUser } from './decorators/current-user.decorator';
 
@@ -46,6 +46,20 @@ export class AuthController {
   @Get('me')
   async getMe(@CurrentUser('id') userId: string) {
     return { success: true, data: await this.authService.getMe(userId) };
+  }
+
+  @Public()
+  @Post('password-reset')
+  @HttpCode(HttpStatus.OK)
+  async requestPasswordReset(@Body() dto: PasswordResetRequestDto) {
+    return { success: true, data: await this.authService.requestPasswordReset(dto) };
+  }
+
+  @Public()
+  @Post('password-reset/confirm')
+  @HttpCode(HttpStatus.OK)
+  async confirmPasswordReset(@Body() dto: PasswordResetConfirmDto) {
+    return { success: true, data: await this.authService.confirmPasswordReset(dto) };
   }
 
   private setTokenCookies(res: Response, tokens: { accessToken: string; refreshToken: string }) {

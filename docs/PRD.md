@@ -1,8 +1,8 @@
-# 소모임 플랫폼 (Sommoim) - PRD v3.7
+# 소모임 플랫폼 (Sommoim) - PRD v3.8
 
 **작성일:** 2025-12-09
-**버전:** 3.7
-**상태:** 개발 진행 중 (Phase 1-7 완료)
+**버전:** 3.8
+**상태:** 개발 진행 중 (Phase 1-8 완료)
 
 ---
 
@@ -104,7 +104,7 @@
 | JWT 인증 | Access 24h, Refresh 7d | P0 | ✅ 완료 |
 | httpOnly 쿠키 | XSS/CSRF 방어 | P0 | ✅ 완료 |
 | 이메일 인증 | 가입 시 인증 메일 발송 | P1 | 🔜 예정 |
-| 비밀번호 재설정 | 이메일로 재설정 링크 | P1 | 🔜 예정 |
+| 비밀번호 재설정 | 이메일로 6자리 인증코드 발송 | P1 | ✅ 완료 |
 
 #### 3.1.2 프로필
 
@@ -312,6 +312,33 @@
 | 신고 목록 | 상태별 필터링 | ✅ 완료 |
 | 신고 처리 | 상태 변경 | ✅ 완료 |
 
+#### 3.8.7 파일 관리
+
+| 기능 | 설명 | 상태 |
+|------|------|------|
+| 파일 목록 | 업로드된 파일 조회 | ✅ 완료 |
+| 파일 통계 | 총 용량, 유형별/엔티티별 통계 | ✅ 완료 |
+| 파일 삭제 | 개별/일괄 삭제 | ✅ 완료 |
+| 뷰 모드 | 리스트/그리드 뷰 전환 | ✅ 완료 |
+
+#### 3.8.8 활동 로그
+
+| 기능 | 설명 | 상태 |
+|------|------|------|
+| 로그 목록 | 관리자 활동 기록 조회 | ✅ 완료 |
+| 액션 필터 | CREATE/UPDATE/DELETE 필터링 | ✅ 완료 |
+| 로그 검색 | 액션/엔티티/사용자 검색 | ✅ 완료 |
+
+#### 3.8.9 시스템 설정
+
+| 기능 | 설명 | 상태 |
+|------|------|------|
+| 일반 설정 | 사이트 이름, 설명, 최대 인원 | ✅ 완료 |
+| 알림 설정 | 이메일/푸시 알림 활성화 | ✅ 완료 |
+| 보안 설정 | 이메일 인증, 로그인 시도, 세션 | ✅ 완료 |
+| 이메일 설정 | SMTP 호스트, 포트, 발신자 | ✅ 완료 |
+| DB 설정 | 자동 백업 활성화/주기 | ✅ 완료 |
+
 ---
 
 ## 4. 화면 구성
@@ -322,7 +349,7 @@
 /                           - 홈 (배너, 카테고리, 맞춤 추천, 인기/최신 모임) ✅
 ├── /login                  - 로그인 ✅
 ├── /register               - 회원가입 ✅
-├── /forgot-password        - 비밀번호 찾기 🔜
+├── /forgot-password        - 비밀번호 찾기 ✅
 │
 ├── /meetings               - 모임 목록 ✅
 │   ├── /create             - 모임 생성 ✅
@@ -346,7 +373,10 @@
     ├── /categories         - 카테고리 관리 ✅
     ├── /reports            - 신고 관리 ✅
     ├── /users              - 사용자 관리 ✅
-    └── /meetings           - 모임 관리 ✅
+    ├── /meetings           - 모임 관리 ✅
+    ├── /files              - 파일 관리 ✅
+    ├── /logs               - 활동 로그 ✅
+    └── /settings           - 시스템 설정 ✅
 ```
 
 ### 4.2 주요 화면 설명
@@ -448,16 +478,24 @@
 | 7 | 관심사 설정 및 추천 시스템 | ✅ 완료 | 2025-12-09 |
 | 7 | 차단 관리 페이지 | ✅ 완료 | 2025-12-09 |
 | 7 | 팔로우 시스템 (팔로우/언팔로우/목록) | ✅ 완료 | 2025-12-09 |
+| 8 | 비밀번호 재설정 API (6자리 인증코드) | ✅ 완료 | 2025-12-09 |
+| 8 | 클라이언트 이미지 압축 (browser-image-compression) | ✅ 완료 | 2025-12-09 |
+| 8 | 관리자 파일 관리 (목록/통계/삭제) | ✅ 완료 | 2025-12-09 |
+| 8 | 관리자 활동 로그 (필터/검색) | ✅ 완료 | 2025-12-09 |
+| 8 | 관리자 시스템 설정 (조회/저장) | ✅ 완료 | 2025-12-09 |
+| 8 | 채팅 API 경로 수정 | ✅ 완료 | 2025-12-09 |
 
 ### 6.2 구현된 API
 
-#### 인증 API (5개)
+#### 인증 API (7개)
 ```
-POST   /api/auth/register   ✅ 회원가입
-POST   /api/auth/login      ✅ 로그인 (httpOnly 쿠키)
-POST   /api/auth/logout     ✅ 로그아웃 (토큰 블랙리스트)
-POST   /api/auth/refresh    ✅ 토큰 갱신
-GET    /api/auth/me         ✅ 내 정보 조회
+POST   /api/auth/register           ✅ 회원가입
+POST   /api/auth/login              ✅ 로그인 (httpOnly 쿠키)
+POST   /api/auth/logout             ✅ 로그아웃 (토큰 블랙리스트)
+POST   /api/auth/refresh            ✅ 토큰 갱신
+GET    /api/auth/me                 ✅ 내 정보 조회
+POST   /api/auth/password-reset          ✅ 비밀번호 재설정 요청
+POST   /api/auth/password-reset/confirm  ✅ 비밀번호 재설정 확인
 ```
 
 #### 모임 API (13개)
@@ -556,7 +594,7 @@ POST   /api/meetings/:id/chats  ✅ 메시지 전송
 DELETE /api/chats/:messageId    ✅ 메시지 삭제
 ```
 
-#### 관리자 API (17개)
+#### 관리자 API (25개)
 ```
 GET    /api/admin/dashboard            ✅ 대시보드
 GET    /api/admin/page-sections        ✅ 섹션 목록
@@ -575,6 +613,14 @@ DELETE /api/admin/categories/:id       ✅ 카테고리 삭제
 GET    /api/admin/users                ✅ 사용자 목록
 PUT    /api/admin/users/:id/role       ✅ 역할 변경
 DELETE /api/admin/users/:id            ✅ 사용자 삭제
+GET    /api/admin/files                ✅ 파일 목록
+GET    /api/admin/files/stats          ✅ 파일 통계
+DELETE /api/admin/files/:id            ✅ 파일 삭제
+GET    /api/admin/logs                 ✅ 활동 로그
+GET    /api/admin/settings             ✅ 시스템 설정 조회
+PUT    /api/admin/settings             ✅ 시스템 설정 저장
+GET    /api/admin/meetings             ✅ 모임 목록
+DELETE /api/admin/meetings/:id         ✅ 모임 삭제
 ```
 
 #### 공개 API (3개)
@@ -589,7 +635,6 @@ GET    /api/admin/public/categories    ✅ 활성 카테고리
 | 기능 | 우선순위 | 상태 |
 |------|----------|------|
 | 이메일 인증 | P1 | 🔜 예정 |
-| 비밀번호 재설정 | P1 | 🔜 예정 |
 | 일정 리마인더 | P1 | 🔜 예정 |
 | 성능 최적화 | P1 | 🔜 예정 |
 | 테스트 작성 | P1 | 🔜 예정 |

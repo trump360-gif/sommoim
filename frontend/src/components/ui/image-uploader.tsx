@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { uploadFile } from '@/lib/api/upload';
+import { compressImage, type CompressionOptions } from '@/lib/utils/image-compression';
 
 interface ImageUploaderProps {
   value?: string;
@@ -11,6 +12,7 @@ interface ImageUploaderProps {
   aspectRatio?: string;
   placeholder?: string;
   entityType?: string;
+  compressionOptions?: CompressionOptions;
 }
 
 export function ImageUploader({
@@ -20,9 +22,11 @@ export function ImageUploader({
   aspectRatio = '16/9',
   placeholder = '이미지를 드래그하거나 클릭해서 업로드하세요',
   entityType = 'banner',
+  compressionOptions,
 }: ImageUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -39,11 +43,17 @@ export function ImageUploader({
     }
 
     setError(null);
-    setIsUploading(true);
-    setUploadProgress(0);
+    setIsCompressing(true);
 
     try {
-      const url = await uploadFile(file, entityType, (percent) => {
+      // 이미지 압축
+      const compressedFile = await compressImage(file, compressionOptions);
+
+      setIsCompressing(false);
+      setIsUploading(true);
+      setUploadProgress(0);
+
+      const url = await uploadFile(compressedFile, entityType, (percent) => {
         setUploadProgress(percent);
       });
       onChange(url);
@@ -51,10 +61,11 @@ export function ImageUploader({
       setError('업로드 실패. 다시 시도해주세요');
       console.error('Upload error:', err);
     } finally {
+      setIsCompressing(false);
       setIsUploading(false);
       setUploadProgress(0);
     }
-  }, [onChange, entityType]);
+  }, [onChange, entityType, compressionOptions]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -104,7 +115,7 @@ export function ImageUploader({
         className={`
           relative cursor-pointer overflow-hidden rounded-lg border-2 border-dashed transition-all
           ${isDragging ? 'border-primary-500 bg-primary-50' : 'border-gray-300 hover:border-gray-400'}
-          ${isUploading ? 'pointer-events-none' : ''}
+          ${isUploading || isCompressing ? 'pointer-events-none' : ''}
         `}
         style={{ aspectRatio }}
       >
@@ -146,7 +157,12 @@ export function ImageUploader({
           </>
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
-            {isUploading ? (
+            {isCompressing ? (
+              <>
+                <div className="mb-3 h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-blue-500" />
+                <p className="text-sm text-gray-600">이미지 최적화 중...</p>
+              </>
+            ) : isUploading ? (
               <>
                 <div className="mb-3 h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-primary-500" />
                 <p className="text-sm text-gray-600">업로드 중...</p>

@@ -63,6 +63,38 @@ export interface ReorderItem {
   order: number;
 }
 
+export interface UploadedFile {
+  id: string;
+  userId: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  url: string;
+  key: string;
+  entityType?: string;
+  entityId?: string;
+  createdAt: string;
+}
+
+export interface FileStats {
+  totalSize: number;
+  totalCount: number;
+  byType: Record<string, { count: number; size: number }>;
+  byEntity: Record<string, number>;
+}
+
+export interface ActivityLog {
+  id: string;
+  userId: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  beforeData?: Record<string, unknown>;
+  afterData?: Record<string, unknown>;
+  user: { nickname: string; email: string };
+  createdAt: string;
+}
+
 export const adminApi = {
   getDashboard: () => api.get<DashboardStats>('/admin/dashboard'),
 
@@ -112,4 +144,18 @@ export const adminApi = {
   getPublicSections: () => api.get<PageSection[]>('/admin/public/sections'),
   getPublicBanners: () => api.get<Banner[]>('/admin/public/banners'),
   getPublicCategories: () => api.get<CategoryEntity[]>('/admin/public/categories'),
+
+  // 파일 관리
+  getFiles: (page = 1, limit = 20, entityType?: string) =>
+    api.get<PaginatedResponse<UploadedFile>>('/admin/files', { params: { page, limit, entityType } }),
+  getFileStats: () => api.get<FileStats>('/admin/files/stats'),
+  deleteFile: (id: string) => api.delete(`/admin/files/${id}`),
+
+  // 활동 로그
+  getLogs: (page = 1, limit = 50, filters?: { action?: string; entityType?: string; userId?: string }) =>
+    api.get<PaginatedResponse<ActivityLog>>('/admin/logs', { params: { page, limit, ...filters } }),
+
+  // 시스템 설정
+  getSettings: () => api.get<Record<string, string>>('/admin/settings'),
+  updateSettings: (settings: Record<string, string>) => api.put('/admin/settings', settings),
 };

@@ -162,4 +162,103 @@ export class AdminService {
   async updateReport(id: string, status: string) {
     return this.prisma.report.update({ where: { id }, data: { status: status as any, processedAt: new Date() }, include: this.reportInclude() });
   }
+
+  // ================================
+  // 파일 관리
+  // ================================
+
+  async getFiles(page: number, limit: number, entityType?: string) {
+    const where = entityType ? { entityType } : {};
+    const [data, total] = await Promise.all([
+      this.prisma.uploadedFile.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.uploadedFile.count({ where }),
+    ]);
+    return { data, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
+  }
+
+  async getFileStats() {
+    const files = await this.prisma.uploadedFile.findMany({
+      select: { fileSize: true, fileType: true, entityType: true },
+    });
+
+    const totalSize = files.reduce((sum, f) => sum + f.fileSize, 0);
+    const totalCount = files.length;
+
+    // 타입별 통계
+    const byType: Record<string, { count: number; size: number }> = {};
+    files.forEach((f) => {
+      const type = f.fileType.split('/')[0] || 'other';
+      if (!byType[type]) byType[type] = { count: 0, size: 0 };
+      byType[type].count++;
+      byType[type].size += f.fileSize;
+    });
+
+    // 엔티티별 통계
+    const byEntity: Record<string, number> = {};
+    files.forEach((f) => {
+      const entity = f.entityType || 'general';
+      byEntity[entity] = (byEntity[entity] || 0) + 1;
+    });
+
+    return { totalSize, totalCount, byType, byEntity };
+  }
+
+  async deleteFile(id: string) {
+    const file = await this.prisma.uploadedFile.findUnique({ where: { id } });
+    if (!file) throw new NotFoundException('파일을 찾을 수 없습니다');
+
+    // TODO: R2에서 실제 파일 삭제 (S3Client 필요)
+    await this.prisma.uploadedFile.delete({ where: { id } });
+    return { message: '파일이 삭제되었습니다' };
+  }
+
+  // ================================
+  // 활동 로그
+  // ================================
+
+  async getLogs(page: number, limit: number, filters: { action?: string; entityType?: string; userId?: string }) {
+    const where: any = {};
+    if (filters.action) where.action = filters.action;
+    if (filters.entityType) where.entityType = filters.entityType;
+    if (filters.userId) where.userId = filters.userId;
+
+    const [data, total] = await Promise.all([
+      this.prisma.activityLog.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        include: { user: { select: { nickname: true, email: true } } },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.activityLog.count({ where }),
+    ]);
+    return { data, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
+  }
+
+  // ================================
+  // 시스템 설정
+  // ================================
+
+  async getSettings() {
+    const settings = await this.prisma.systemSetting.findMany();
+    // key-value 객체로 변환
+    return settings.reduce((acc, s) => ({ ...acc, [s.key]: s.value }), {});
+  }
+
+  async updateSettings(settings: Record<string, string>) {
+    const updates = Object.entries(settings).map(([key, value]) =>
+      this.prisma.systemSetting.upsert({
+        where: { key },
+        create: { key, value },
+        update: { value },
+      }),
+    );
+    await Promise.all(updates);
+    return { message: '설정이 저장되었습니다' };
+  }
 }

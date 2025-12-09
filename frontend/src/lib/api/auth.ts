@@ -17,10 +17,24 @@ export interface AuthResponse {
   message: string;
 }
 
+export interface PasswordResetRequestDto {
+  email: string;
+}
+
+export interface PasswordResetConfirmDto {
+  email: string;
+  code: string;
+  newPassword: string;
+}
+
 export const authApi = {
   login: (data: LoginDto) => api.post<AuthResponse>('/auth/login', data),
   register: (data: RegisterDto) => api.post<AuthResponse>('/auth/register', data),
   logout: () => api.post<{ message: string }>('/auth/logout'),
   me: () => api.get<User>('/auth/me'),
   refresh: () => api.post<{ message: string }>('/auth/refresh'),
+  requestPasswordReset: (data: PasswordResetRequestDto) =>
+    api.post<{ message: string }>('/auth/password-reset', data),
+  confirmPasswordReset: (data: PasswordResetConfirmDto) =>
+    api.post<{ message: string }>('/auth/password-reset/confirm', data),
 };

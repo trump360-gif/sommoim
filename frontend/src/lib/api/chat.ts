@@ -18,8 +18,8 @@ export interface ChatMessagesResponse {
 
 export const chatApi = {
   getMessages: (meetingId: string, page = 1, limit = 50) =>
-    api.get<ChatMessagesResponse>(`/chat/${meetingId}/messages`, { params: { page, limit } }),
+    api.get<ChatMessagesResponse>(`/meetings/${meetingId}/chats`, { params: { page, limit } }),
 
-  deleteMessage: (messageId: string) =>
-    api.delete(`/chat/messages/${messageId}`),
+  deleteMessage: (meetingId: string, messageId: string) =>
+    api.delete(`/meetings/${meetingId}/chats/${messageId}`),
 };

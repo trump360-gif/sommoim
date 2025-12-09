@@ -1,10 +1,11 @@
-import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, ConflictException, UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
+import * as crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 import { PrismaService } from '@/prisma/prisma.service';
-import { RegisterDto, LoginDto } from './dto';
+import { RegisterDto, LoginDto, PasswordResetRequestDto, PasswordResetConfirmDto } from './dto';
 import { JwtPayload } from './strategies/jwt.strategy';
 
 @Injectable()
@@ -92,5 +93,86 @@ export class AuthService {
       where: { id: userId },
       select: { id: true, email: true, nickname: true, role: true, profile: { select: { bio: true, avatarUrl: true } } },
     });
+  }
+
+  // ================================
+  // Password Reset
+  // ================================
+
+  async requestPasswordReset(dto: PasswordResetRequestDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: dto.email, deletedAt: null },
+    });
+
+    // 보안상 이메일 존재 여부를 노출하지 않음
+    if (!user) {
+      return { message: '비밀번호 재설정 이메일이 발송되었습니다' };
+    }
+
+    // 기존 토큰 삭제
+    await this.prisma.passwordResetToken.deleteMany({
+      where: { userId: user.id },
+    });
+
+    // 토큰 생성 (6자리 숫자 코드)
+    const token = crypto.randomInt(100000, 999999).toString();
+    const tokenHash = await bcrypt.hash(token, 10);
+
+    await this.prisma.passwordResetToken.create({
+      data: {
+        tokenHash,
+        userId: user.id,
+        email: user.email,
+        expiresAt: new Date(Date.now() + 30 * 60 * 1000), // 30분 유효
+      },
+    });
+
+    // TODO: 실제 이메일 발송 로직 (현재는 콘솔 출력)
+    console.log(`[Password Reset] Email: ${user.email}, Code: ${token}`);
+
+    return { message: '비밀번호 재설정 이메일이 발송되었습니다' };
+  }
+
+  async confirmPasswordReset(dto: PasswordResetConfirmDto) {
+    const resetTokens = await this.prisma.passwordResetToken.findMany({
+      where: {
+        email: dto.email,
+        usedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 1,
+    });
+
+    if (resetTokens.length === 0) {
+      throw new BadRequestException('유효하지 않거나 만료된 코드입니다');
+    }
+
+    const resetToken = resetTokens[0];
+    const isValid = await bcrypt.compare(dto.code, resetToken.tokenHash);
+
+    if (!isValid) {
+      throw new BadRequestException('인증 코드가 올바르지 않습니다');
+    }
+
+    // 비밀번호 변경
+    const hashedPassword = await bcrypt.hash(dto.newPassword, 12);
+
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: resetToken.userId },
+        data: { password: hashedPassword },
+      }),
+      this.prisma.passwordResetToken.update({
+        where: { id: resetToken.id },
+        data: { usedAt: new Date() },
+      }),
+      // 모든 refresh token 무효화
+      this.prisma.refreshToken.deleteMany({
+        where: { userId: resetToken.userId },
+      }),
+    ]);
+
+    return { message: '비밀번호가 성공적으로 변경되었습니다' };
   }
 }

@@ -4,7 +4,9 @@
 // Imports
 // ================================
 import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
+import { adminApi, type UploadedFile, type FileStats } from '@/lib/api/admin';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { SimpleTabs as Tabs } from '@/components/ui/tabs';
@@ -12,31 +14,17 @@ import { toast } from 'sonner';
 import {
   HardDrive,
   Search,
-  Upload,
   Trash2,
   Download,
   Image,
   FileText,
   File,
   Film,
-  MoreVertical,
   Grid,
   List,
   FolderOpen,
+  Loader2,
 } from 'lucide-react';
-
-// ================================
-// Types
-// ================================
-interface FileItem {
-  id: string;
-  name: string;
-  type: 'image' | 'document' | 'video' | 'other';
-  size: number;
-  url: string;
-  uploadedBy: string;
-  createdAt: string;
-}
 
 // ================================
 // Constants
@@ -46,88 +34,28 @@ const FILE_TABS = [
   { key: 'image', label: '이미지' },
   { key: 'document', label: '문서' },
   { key: 'video', label: '동영상' },
-  { key: 'other', label: '기타' },
-];
-
-// Mock data
-const mockFiles: FileItem[] = [
-  {
-    id: '1',
-    name: 'banner-main.jpg',
-    type: 'image',
-    size: 2456789,
-    url: '/uploads/banners/banner-main.jpg',
-    uploadedBy: 'admin',
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    name: 'meeting-photo-001.png',
-    type: 'image',
-    size: 1234567,
-    url: '/uploads/meetings/photo-001.png',
-    uploadedBy: 'user123',
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-  },
-  {
-    id: '3',
-    name: 'terms-of-service.pdf',
-    type: 'document',
-    size: 567890,
-    url: '/uploads/docs/terms.pdf',
-    uploadedBy: 'admin',
-    createdAt: new Date(Date.now() - 172800000).toISOString(),
-  },
-  {
-    id: '4',
-    name: 'intro-video.mp4',
-    type: 'video',
-    size: 45678901,
-    url: '/uploads/videos/intro.mp4',
-    uploadedBy: 'admin',
-    createdAt: new Date(Date.now() - 259200000).toISOString(),
-  },
-  {
-    id: '5',
-    name: 'profile-avatar.jpg',
-    type: 'image',
-    size: 345678,
-    url: '/uploads/avatars/user-123.jpg',
-    uploadedBy: 'user456',
-    createdAt: new Date(Date.now() - 345600000).toISOString(),
-  },
-  {
-    id: '6',
-    name: 'backup-data.zip',
-    type: 'other',
-    size: 89012345,
-    url: '/uploads/backups/backup.zip',
-    uploadedBy: 'system',
-    createdAt: new Date(Date.now() - 432000000).toISOString(),
-  },
 ];
 
 // ================================
 // Helper Functions
 // ================================
-function getFileIcon(type: string) {
-  switch (type) {
-    case 'image':
-      return <Image className="h-5 w-5 text-blue-500" />;
-    case 'document':
-      return <FileText className="h-5 w-5 text-orange-500" />;
-    case 'video':
-      return <Film className="h-5 w-5 text-purple-500" />;
-    default:
-      return <File className="h-5 w-5 text-gray-500" />;
+function getFileIcon(fileType: string) {
+  if (fileType.startsWith('image/')) {
+    return <Image className="h-5 w-5 text-blue-500" />;
   }
+  if (fileType.includes('pdf') || fileType.includes('document')) {
+    return <FileText className="h-5 w-5 text-orange-500" />;
+  }
+  if (fileType.startsWith('video/')) {
+    return <Film className="h-5 w-5 text-purple-500" />;
+  }
+  return <File className="h-5 w-5 text-gray-500" />;
 }
 
 function formatFileSize(bytes: number) {
   if (bytes < 1024) return bytes + ' B';
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-  if (bytes < 1024 * 1024 * 1024)
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
 }
 
@@ -139,15 +67,50 @@ function formatDate(dateStr: string) {
   });
 }
 
+function getFileTypeCategory(fileType: string): string {
+  if (fileType.startsWith('image/')) return 'image';
+  if (fileType.includes('pdf') || fileType.includes('document')) return 'document';
+  if (fileType.startsWith('video/')) return 'video';
+  return 'other';
+}
+
 // ================================
 // Component
 // ================================
 export default function AdminFilesPage() {
   const { user, isAuthenticated } = useAuth();
+  const queryClient = useQueryClient();
   const [typeFilter, setTypeFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
+  const [page, setPage] = useState(1);
+
+  // Queries
+  const { data: filesData, isLoading: filesLoading } = useQuery({
+    queryKey: ['admin-files', page],
+    queryFn: () => adminApi.getFiles(page, 50),
+    enabled: isAuthenticated && user?.role === 'ADMIN',
+  });
+
+  const { data: statsData } = useQuery({
+    queryKey: ['admin-files-stats'],
+    queryFn: adminApi.getFileStats,
+    enabled: isAuthenticated && user?.role === 'ADMIN',
+  });
+
+  // Mutations
+  const deleteMutation = useMutation({
+    mutationFn: adminApi.deleteFile,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-files'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-files-stats'] });
+      toast.success('파일이 삭제되었습니다');
+    },
+    onError: () => {
+      toast.error('파일 삭제에 실패했습니다');
+    },
+  });
 
   if (!isAuthenticated || user?.role !== 'ADMIN') {
     return (
@@ -157,15 +120,18 @@ export default function AdminFilesPage() {
     );
   }
 
-  const filteredFiles = mockFiles.filter((file) => {
-    if (typeFilter !== 'all' && file.type !== typeFilter) return false;
+  const files = filesData?.data || [];
+  const stats = statsData || { totalSize: 0, totalCount: 0, byType: {}, byEntity: {} };
+
+  // 필터링
+  const filteredFiles = files.filter((file) => {
+    const category = getFileTypeCategory(file.fileType);
+    if (typeFilter !== 'all' && category !== typeFilter) return false;
     if (searchQuery) {
-      return file.name.toLowerCase().includes(searchQuery.toLowerCase());
+      return file.fileName.toLowerCase().includes(searchQuery.toLowerCase());
     }
     return true;
   });
-
-  const totalSize = mockFiles.reduce((acc, file) => acc + file.size, 0);
 
   const handleSelectFile = (id: string) => {
     setSelectedFiles((prev) =>
@@ -173,23 +139,25 @@ export default function AdminFilesPage() {
     );
   };
 
-  const handleDeleteSelected = () => {
-    toast.success(`${selectedFiles.length}개 파일이 삭제되었습니다`);
+  const handleDeleteSelected = async () => {
+    for (const id of selectedFiles) {
+      await deleteMutation.mutateAsync(id);
+    }
     setSelectedFiles([]);
+  };
+
+  const handleDeleteFile = (id: string) => {
+    if (confirm('이 파일을 삭제하시겠습니까?')) {
+      deleteMutation.mutate(id);
+    }
   };
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <HardDrive className="h-6 w-6 text-gray-600" />
-          <h1 className="text-2xl font-bold">파일 관리</h1>
-        </div>
-        <Button>
-          <Upload className="mr-2 h-4 w-4" />
-          파일 업로드
-        </Button>
+      <div className="flex items-center gap-3">
+        <HardDrive className="h-6 w-6 text-gray-600" />
+        <h1 className="text-2xl font-bold">파일 관리</h1>
       </div>
 
       {/* Stats */}
@@ -200,7 +168,7 @@ export default function AdminFilesPage() {
               <HardDrive className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{formatFileSize(totalSize)}</p>
+              <p className="text-2xl font-bold">{formatFileSize(stats.totalSize)}</p>
               <p className="text-sm text-gray-500">총 사용량</p>
             </div>
           </CardContent>
@@ -211,9 +179,7 @@ export default function AdminFilesPage() {
               <Image className="h-5 w-5 text-green-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold">
-                {mockFiles.filter((f) => f.type === 'image').length}
-              </p>
+              <p className="text-2xl font-bold">{stats.byType.image?.count || 0}</p>
               <p className="text-sm text-gray-500">이미지</p>
             </div>
           </CardContent>
@@ -224,9 +190,7 @@ export default function AdminFilesPage() {
               <FileText className="h-5 w-5 text-orange-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold">
-                {mockFiles.filter((f) => f.type === 'document').length}
-              </p>
+              <p className="text-2xl font-bold">{stats.byType.application?.count || 0}</p>
               <p className="text-sm text-gray-500">문서</p>
             </div>
           </CardContent>
@@ -237,9 +201,7 @@ export default function AdminFilesPage() {
               <Film className="h-5 w-5 text-purple-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold">
-                {mockFiles.filter((f) => f.type === 'video').length}
-              </p>
+              <p className="text-2xl font-bold">{stats.byType.video?.count || 0}</p>
               <p className="text-sm text-gray-500">동영상</p>
             </div>
           </CardContent>
@@ -248,12 +210,7 @@ export default function AdminFilesPage() {
 
       {/* Filters */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <Tabs
-          tabs={FILE_TABS}
-          activeTab={typeFilter}
-          onChange={setTypeFilter}
-          variant="pills"
-        />
+        <Tabs tabs={FILE_TABS} activeTab={typeFilter} onChange={setTypeFilter} variant="pills" />
         <div className="flex gap-2">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -266,16 +223,10 @@ export default function AdminFilesPage() {
             />
           </div>
           <div className="flex rounded-lg border border-gray-300">
-            <button
-              onClick={() => setViewMode('list')}
-              className={`p-2 ${viewMode === 'list' ? 'bg-gray-100' : ''}`}
-            >
+            <button onClick={() => setViewMode('list')} className={`p-2 ${viewMode === 'list' ? 'bg-gray-100' : ''}`}>
               <List className="h-4 w-4" />
             </button>
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`p-2 ${viewMode === 'grid' ? 'bg-gray-100' : ''}`}
-            >
+            <button onClick={() => setViewMode('grid')} className={`p-2 ${viewMode === 'grid' ? 'bg-gray-100' : ''}`}>
               <Grid className="h-4 w-4" />
             </button>
           </div>
@@ -285,22 +236,23 @@ export default function AdminFilesPage() {
       {/* Selected Actions */}
       {selectedFiles.length > 0 && (
         <div className="flex items-center gap-4 rounded-lg bg-blue-50 p-3">
-          <span className="text-sm font-medium text-blue-700">
-            {selectedFiles.length}개 선택됨
-          </span>
-          <Button size="sm" variant="outline" onClick={handleDeleteSelected}>
+          <span className="text-sm font-medium text-blue-700">{selectedFiles.length}개 선택됨</span>
+          <Button size="sm" variant="outline" onClick={handleDeleteSelected} disabled={deleteMutation.isPending}>
             <Trash2 className="mr-2 h-4 w-4" />
             삭제
-          </Button>
-          <Button size="sm" variant="outline">
-            <Download className="mr-2 h-4 w-4" />
-            다운로드
           </Button>
         </div>
       )}
 
+      {/* Loading */}
+      {filesLoading && (
+        <div className="flex justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        </div>
+      )}
+
       {/* File List */}
-      {viewMode === 'list' ? (
+      {!filesLoading && viewMode === 'list' && (
         <Card>
           <CardContent className="p-0">
             <table className="w-full">
@@ -309,23 +261,15 @@ export default function AdminFilesPage() {
                   <th className="p-3 text-left">
                     <input
                       type="checkbox"
-                      checked={selectedFiles.length === filteredFiles.length}
-                      onChange={(e) =>
-                        setSelectedFiles(
-                          e.target.checked
-                            ? filteredFiles.map((f) => f.id)
-                            : []
-                        )
-                      }
+                      checked={selectedFiles.length === filteredFiles.length && filteredFiles.length > 0}
+                      onChange={(e) => setSelectedFiles(e.target.checked ? filteredFiles.map((f) => f.id) : [])}
                       className="rounded border-gray-300"
                     />
                   </th>
                   <th className="p-3 text-left text-sm font-medium">파일명</th>
                   <th className="p-3 text-left text-sm font-medium">유형</th>
                   <th className="p-3 text-left text-sm font-medium">크기</th>
-                  <th className="p-3 text-left text-sm font-medium">
-                    업로드 사용자
-                  </th>
+                  <th className="p-3 text-left text-sm font-medium">엔티티</th>
                   <th className="p-3 text-left text-sm font-medium">날짜</th>
                   <th className="p-3 text-left text-sm font-medium">작업</th>
                 </tr>
@@ -343,28 +287,22 @@ export default function AdminFilesPage() {
                     </td>
                     <td className="p-3">
                       <div className="flex items-center gap-3">
-                        {getFileIcon(file.type)}
-                        <span className="text-sm font-medium">{file.name}</span>
+                        {getFileIcon(file.fileType)}
+                        <span className="max-w-[200px] truncate text-sm font-medium">{file.fileName}</span>
                       </div>
                     </td>
-                    <td className="p-3 text-sm capitalize text-gray-600">
-                      {file.type}
-                    </td>
-                    <td className="p-3 text-sm text-gray-600">
-                      {formatFileSize(file.size)}
-                    </td>
-                    <td className="p-3 text-sm text-gray-600">
-                      {file.uploadedBy}
-                    </td>
-                    <td className="p-3 text-sm text-gray-500">
-                      {formatDate(file.createdAt)}
-                    </td>
+                    <td className="p-3 text-sm text-gray-600">{file.fileType}</td>
+                    <td className="p-3 text-sm text-gray-600">{formatFileSize(file.fileSize)}</td>
+                    <td className="p-3 text-sm text-gray-600">{file.entityType || '-'}</td>
+                    <td className="p-3 text-sm text-gray-500">{formatDate(file.createdAt)}</td>
                     <td className="p-3">
                       <div className="flex gap-1">
-                        <Button size="sm" variant="ghost">
-                          <Download className="h-4 w-4" />
+                        <Button size="sm" variant="ghost" asChild>
+                          <a href={file.url} target="_blank" rel="noopener noreferrer">
+                            <Download className="h-4 w-4" />
+                          </a>
                         </Button>
-                        <Button size="sm" variant="ghost">
+                        <Button size="sm" variant="ghost" onClick={() => handleDeleteFile(file.id)}>
                           <Trash2 className="h-4 w-4 text-red-500" />
                         </Button>
                       </div>
@@ -375,7 +313,10 @@ export default function AdminFilesPage() {
             </table>
           </CardContent>
         </Card>
-      ) : (
+      )}
+
+      {/* Grid View */}
+      {!filesLoading && viewMode === 'grid' && (
         <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {filteredFiles.map((file) => (
             <Card
@@ -387,26 +328,44 @@ export default function AdminFilesPage() {
             >
               <CardContent className="p-4">
                 <div className="mb-3 flex h-24 items-center justify-center rounded-lg bg-gray-100">
-                  {file.type === 'image' ? (
-                    <Image className="h-12 w-12 text-gray-400" />
+                  {file.fileType.startsWith('image/') ? (
+                    <img src={file.url} alt={file.fileName} className="h-full w-full rounded-lg object-cover" />
                   ) : (
-                    getFileIcon(file.type)
+                    getFileIcon(file.fileType)
                   )}
                 </div>
-                <p className="truncate text-sm font-medium">{file.name}</p>
-                <p className="text-xs text-gray-500">
-                  {formatFileSize(file.size)}
-                </p>
+                <p className="truncate text-sm font-medium">{file.fileName}</p>
+                <p className="text-xs text-gray-500">{formatFileSize(file.fileSize)}</p>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
 
-      {filteredFiles.length === 0 && (
+      {!filesLoading && filteredFiles.length === 0 && (
         <div className="py-12 text-center">
           <FolderOpen className="mx-auto h-12 w-12 text-gray-300" />
           <p className="mt-4 text-gray-500">파일이 없습니다</p>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {filesData?.meta && filesData.meta.totalPages > 1 && (
+        <div className="flex justify-center gap-2">
+          <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(page - 1)}>
+            이전
+          </Button>
+          <span className="flex items-center px-3 text-sm text-gray-600">
+            {page} / {filesData.meta.totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page === filesData.meta.totalPages}
+            onClick={() => setPage(page + 1)}
+          >
+            다음
+          </Button>
         </div>
       )}
     </div>

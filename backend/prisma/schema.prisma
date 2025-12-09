@@ -39,6 +39,9 @@ model User {
   // 북마크
   bookmarks       Bookmark[]
 
+  // 운영진
+  staffRoles      MeetingStaff[]
+
   deletedAt DateTime?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -168,6 +171,7 @@ model MeetingStaff {
   meetingId   String
   meeting     Meeting     @relation(fields: [meetingId], references: [id], onDelete: Cascade)
   userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   role        StaffRole
   permissions StaffPermission[]
@@ -706,6 +710,23 @@ enum TokenBlacklistType {
   LOGOUT
   REVOKE
   PASSWORD_CHANGE
+}
+
+// ========== 비밀번호 재설정 토큰 ==========
+
+model PasswordResetToken {
+  id          String   @id @default(cuid())
+  tokenHash   String   @unique
+  userId      String
+  email       String
+
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([email])
+  @@index([expiresAt])
 }
 
 // ========== 시스템 설정 ==========

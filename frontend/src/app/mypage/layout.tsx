@@ -27,7 +27,7 @@ export default function MypageLayout({
   // Auth loading
   if (authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center pt-16">
         <div className="text-gray-500">로딩 중...</div>
       </div>
     );
@@ -42,14 +42,14 @@ export default function MypageLayout({
   // Profile loading
   if (isLoading || !profile) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center pt-16">
         <div className="text-gray-500">로딩 중...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-[calc(100vh-4rem)] bg-gray-50 pt-20">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex gap-8">
           {/* Sidebar - Hidden on mobile */}

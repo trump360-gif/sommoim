@@ -138,4 +138,56 @@ export class AdminController {
   updateReport(@Param('id') id: string, @Body('status') status: string) {
     return this.adminService.updateReport(id, status);
   }
+
+  // ================================
+  // 파일 관리
+  // ================================
+
+  @Get('files')
+  getFiles(
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+    @Query('entityType') entityType?: string,
+  ) {
+    return this.adminService.getFiles(+page, +limit, entityType);
+  }
+
+  @Get('files/stats')
+  getFileStats() {
+    return this.adminService.getFileStats();
+  }
+
+  @Delete('files/:id')
+  deleteFile(@Param('id') id: string) {
+    return this.adminService.deleteFile(id);
+  }
+
+  // ================================
+  // 활동 로그
+  // ================================
+
+  @Get('logs')
+  getLogs(
+    @Query('page') page = 1,
+    @Query('limit') limit = 50,
+    @Query('action') action?: string,
+    @Query('entityType') entityType?: string,
+    @Query('userId') userId?: string,
+  ) {
+    return this.adminService.getLogs(+page, +limit, { action, entityType, userId });
+  }
+
+  // ================================
+  // 시스템 설정
+  // ================================
+
+  @Get('settings')
+  getSettings() {
+    return this.adminService.getSettings();
+  }
+
+  @Put('settings')
+  updateSettings(@Body() settings: Record<string, string>) {
+    return this.adminService.updateSettings(settings);
+  }
 }
