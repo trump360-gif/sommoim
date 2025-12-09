@@ -67,34 +67,24 @@ export default function AdminBannersPage() {
     endDate: ''
   });
 
+  const buildBannerData = (): Omit<Banner, 'id' | 'clickCount' | 'createdAt' | 'updatedAt'> => ({
+    order: formData.order,
+    isActive: formData.isActive,
+    imageUrl: formData.imageUrl || undefined,
+    linkUrl: formData.linkUrl || undefined,
+    title: formData.title || undefined,
+    subtitle: formData.subtitle || undefined,
+    backgroundColor: formData.backgroundColor || undefined,
+    startDate: formData.startDate ? new Date(formData.startDate).toISOString() : undefined,
+    endDate: formData.endDate ? new Date(formData.endDate).toISOString() : undefined,
+  });
+
   const handleCreate = () => {
-    const data: any = {
-      order: formData.order,
-      isActive: formData.isActive
-    };
-    if (formData.imageUrl) data.imageUrl = formData.imageUrl;
-    if (formData.linkUrl) data.linkUrl = formData.linkUrl;
-    if (formData.title) data.title = formData.title;
-    if (formData.subtitle) data.subtitle = formData.subtitle;
-    if (formData.backgroundColor) data.backgroundColor = formData.backgroundColor;
-    if (formData.startDate) data.startDate = new Date(formData.startDate).toISOString();
-    if (formData.endDate) data.endDate = new Date(formData.endDate).toISOString();
-    createMutation.mutate(data);
+    createMutation.mutate(buildBannerData());
   };
 
   const handleUpdate = (id: string) => {
-    const data: any = {
-      order: formData.order,
-      isActive: formData.isActive
-    };
-    if (formData.imageUrl) data.imageUrl = formData.imageUrl;
-    if (formData.linkUrl) data.linkUrl = formData.linkUrl;
-    if (formData.title) data.title = formData.title;
-    if (formData.subtitle) data.subtitle = formData.subtitle;
-    if (formData.backgroundColor) data.backgroundColor = formData.backgroundColor;
-    if (formData.startDate) data.startDate = new Date(formData.startDate).toISOString();
-    if (formData.endDate) data.endDate = new Date(formData.endDate).toISOString();
-    updateMutation.mutate({ id, data });
+    updateMutation.mutate({ id, data: buildBannerData() });
   };
 
   const startEdit = (banner: Banner) => {
@@ -102,9 +92,9 @@ export default function AdminBannersPage() {
     setFormData({
       imageUrl: banner.imageUrl || '',
       linkUrl: banner.linkUrl || '',
-      title: (banner as any).title || '',
-      subtitle: (banner as any).subtitle || '',
-      backgroundColor: (banner as any).backgroundColor || '',
+      title: banner.title || '',
+      subtitle: banner.subtitle || '',
+      backgroundColor: banner.backgroundColor || '',
       order: banner.order,
       isActive: banner.isActive,
       startDate: banner.startDate ? banner.startDate.split('T')[0] : '',
@@ -234,7 +224,7 @@ export default function AdminBannersPage() {
               <label htmlFor="isActive" className="text-sm">활성화</label>
             </div>
             <div className="flex gap-2">
-              <Button onClick={handleCreate} disabled={createMutation.isPending || !formData.imageUrl}>
+              <Button onClick={handleCreate} disabled={createMutation.isPending || (!formData.imageUrl && !formData.backgroundColor)}>
                 {createMutation.isPending ? '저장 중...' : '저장'}
               </Button>
               <Button variant="outline" onClick={() => { setIsCreating(false); resetForm(); }}>

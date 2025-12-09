@@ -100,8 +100,11 @@ export class UserService {
   }
 
   async getBlockedUsers(userId: string) {
-    const blocks = await this.prisma.userBlock.findMany({ where: { blockerId: userId }, include: { blocked: { select: this.userSelect } }, orderBy: { createdAt: 'desc' } });
-    return blocks.map((b) => b.blocked);
+    return this.prisma.userBlock.findMany({
+      where: { blockerId: userId },
+      include: { blocked: { select: this.userSelect } },
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
   async deleteAccount(userId: string) {

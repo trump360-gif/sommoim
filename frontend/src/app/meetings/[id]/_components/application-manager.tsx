@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { meetingsApi, Application } from '@/lib/api/meetings';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { Check, X, Users, ChevronDown, ChevronUp } from 'lucide-react';
 
 // ================================
 // Types
@@ -50,20 +52,26 @@ export function ApplicationManager({ meetingId, isHost }: ApplicationManagerProp
   const reviewMutation = useMutation({
     mutationFn: ({ participantId, status, reason }: { participantId: string; status: 'APPROVED' | 'REJECTED'; reason?: string }) =>
       meetingsApi.reviewApplication(participantId, { status, reason }),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['applications', meetingId] });
+      queryClient.invalidateQueries({ queryKey: ['meeting', meetingId] });
       setSelectedIds([]);
+      toast.success(variables.status === 'APPROVED' ? '가입을 승인했습니다' : '가입을 거절했습니다');
     },
+    onError: () => toast.error('처리에 실패했습니다'),
   });
 
   const bulkReviewMutation = useMutation({
     mutationFn: ({ status, reason }: { status: 'APPROVED' | 'REJECTED'; reason?: string }) =>
       meetingsApi.bulkReviewApplications(meetingId, selectedIds, { status, reason }),
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['applications', meetingId] });
+      queryClient.invalidateQueries({ queryKey: ['meeting', meetingId] });
       setSelectedIds([]);
       setShowRejectModal(false);
+      toast.success(`${data.success}명 ${variables.status === 'APPROVED' ? '승인' : '거절'} 완료`);
     },
+    onError: () => toast.error('일괄 처리에 실패했습니다'),
   });
 
   // ================================

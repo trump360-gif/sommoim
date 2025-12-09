@@ -3,10 +3,12 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useQuery } from '@tanstack/react-query';
-import { meetingsApi } from '@/lib/api/meetings';
+import { meetingsApi, RecommendedMeeting } from '@/lib/api/meetings';
 import { adminApi, type Banner, type CategoryEntity, type PageSection } from '@/lib/api/admin';
 import { MeetingCard } from '@/components/meeting/meeting-card';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
+import { Sparkles } from 'lucide-react';
 import type { Meeting, PaginatedResponse } from '@/types';
 
 const DEFAULT_CATEGORIES = [
@@ -30,6 +32,8 @@ interface HeroLayout {
 }
 
 export default function HomePage() {
+  const { isAuthenticated } = useAuth();
+
   const { data: sections } = useQuery<PageSection[]>({
     queryKey: ['public', 'sections'],
     queryFn: () => adminApi.getPublicSections(),
@@ -43,6 +47,12 @@ export default function HomePage() {
   const { data: adminCategories } = useQuery<CategoryEntity[]>({
     queryKey: ['public', 'categories'],
     queryFn: () => adminApi.getPublicCategories(),
+  });
+
+  const { data: recommendedMeetings } = useQuery<RecommendedMeeting[]>({
+    queryKey: ['meetings', 'recommended'],
+    queryFn: () => meetingsApi.getRecommended(4),
+    enabled: isAuthenticated,
   });
 
   const { data: latestMeetings } = useQuery<PaginatedResponse<Meeting>>({
@@ -73,22 +83,50 @@ export default function HomePage() {
       {banners && banners.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {banners.slice(0, 3).map((banner, index) => (
-              <Link
-                key={banner.id}
-                href={banner.linkUrl || '#'}
-                className="group relative aspect-[16/9] overflow-hidden rounded-2xl shadow-soft transition-all duration-300 hover:shadow-medium hover:-translate-y-1"
-              >
-                <Image
-                  src={banner.imageUrl}
-                  alt="배너"
-                  fill
-                  priority={index === 0}
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                />
-              </Link>
-            ))}
+            {banners.slice(0, 3).map((banner, index) => {
+              const bannerContent = (
+                <>
+                  {banner.imageUrl ? (
+                    <Image
+                      src={banner.imageUrl}
+                      alt={banner.title || '배너'}
+                      fill
+                      priority={index === 0}
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    />
+                  ) : (
+                    <div
+                      className="absolute inset-0"
+                      style={{ backgroundColor: banner.backgroundColor || '#6366f1' }}
+                    />
+                  )}
+
+                  {(banner.title || banner.subtitle) && (
+                    <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/60 to-transparent p-6">
+                      {banner.title && (
+                        <h3 className="text-xl font-bold text-white">{banner.title}</h3>
+                      )}
+                      {banner.subtitle && (
+                        <p className="mt-1 text-sm text-white/90">{banner.subtitle}</p>
+                      )}
+                    </div>
+                  )}
+                </>
+              );
+
+              const className = "group relative aspect-[16/9] overflow-hidden rounded-2xl shadow-soft transition-all duration-300 hover:shadow-medium hover:-translate-y-1";
+
+              return banner.linkUrl ? (
+                <Link key={banner.id} href={banner.linkUrl} className={className}>
+                  {bannerContent}
+                </Link>
+              ) : (
+                <div key={banner.id} className={`${className} cursor-default`}>
+                  {bannerContent}
+                </div>
+              );
+            })}
           </div>
         </section>
       )}
@@ -149,6 +187,45 @@ export default function HomePage() {
           })}
         </div>
       </section>
+
+      {/* Recommended Meetings (for logged-in users) */}
+      {isAuthenticated && recommendedMeetings && recommendedMeetings.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+          <div className="mb-8 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500">
+                <Sparkles className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-3xl font-bold tracking-tight">맞춤 추천</h2>
+                <p className="mt-1 text-gray-600">관심사에 맞는 모임을 찾아봤어요</p>
+              </div>
+            </div>
+            <Link href="/mypage/edit" className="text-sm font-semibold text-primary-600 transition-colors hover:text-primary-700">
+              관심사 설정 →
+            </Link>
+          </div>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {recommendedMeetings.map((meeting) => (
+              <div key={meeting.id} className="relative">
+                <MeetingCard meeting={meeting} />
+                {meeting.reason && meeting.reason.length > 0 && (
+                  <div className="absolute -top-2 left-3 flex flex-wrap gap-1">
+                    {meeting.reason.slice(0, 2).map((r, i) => (
+                      <span
+                        key={i}
+                        className="rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-2.5 py-0.5 text-xs font-medium text-white shadow-sm"
+                      >
+                        {r}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Popular Meetings */}
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">

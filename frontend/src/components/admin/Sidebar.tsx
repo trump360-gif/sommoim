@@ -11,6 +11,10 @@ import {
     Image,
     Tag,
     ChevronRight,
+    Settings,
+    FileText,
+    HardDrive,
+    Home,
     type LucideIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -44,6 +48,14 @@ const navSections: NavSection[] = [
             { label: '카테고리', href: '/admin/categories', icon: Tag },
         ],
     },
+    {
+        title: '시스템 관리',
+        items: [
+            { label: '시스템 설정', href: '/admin/settings', icon: Settings },
+            { label: '활동 로그', href: '/admin/logs', icon: FileText },
+            { label: '파일 관리', href: '/admin/files', icon: HardDrive },
+        ],
+    },
 ];
 
 export function AdminSidebar() {
@@ -53,13 +65,15 @@ export function AdminSidebar() {
         <aside className="hidden lg:flex lg:flex-col lg:w-64 bg-gray-900 text-white">
             {/* Logo */}
             <div className="p-6 border-b border-gray-800">
-                <Link href="/admin" className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded-lg bg-primary-600 flex items-center justify-center">
-                        <span className="text-white font-bold">S</span>
+                <Link href="/admin" className="group flex items-center gap-3">
+                    <div className="relative flex h-10 w-10 items-center justify-center">
+                        <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary-400 via-primary-500 to-violet-500 opacity-90 transition-all duration-300 group-hover:opacity-100" />
+                        <div className="absolute inset-[2px] rounded-[10px] bg-gradient-to-br from-primary-500 to-primary-600" />
+                        <span className="relative text-xl font-black text-white drop-shadow-sm">S</span>
                     </div>
                     <div>
-                        <h1 className="text-lg font-bold">소모임</h1>
-                        <p className="text-xs text-gray-400">Admin</p>
+                        <h1 className="text-lg font-bold tracking-tight">소모임</h1>
+                        <p className="text-[10px] font-medium tracking-widest text-gray-500">ADMIN</p>
                     </div>
                 </Link>
             </div>

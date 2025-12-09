@@ -1,14 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { meetingsApi, MeetingQueryParams } from '@/lib/api/meetings';
 import { MeetingCard } from '@/components/meeting/meeting-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
-import type { Category, MeetingStatus } from '@/types';
+import type { Category } from '@/types';
+
+// ================================
+// Constants
+// ================================
 
 const CATEGORIES: { value: Category | ''; label: string }[] = [
   { value: '', label: '전체' },
@@ -26,15 +32,38 @@ const SORT_OPTIONS = [
   { value: 'deadline', label: '마감임박순' },
 ];
 
-export default function MeetingsPage() {
+// ================================
+// Component
+// ================================
+
+function MeetingsContent() {
   const { isAuthenticated } = useAuth();
-  const [filters, setFilters] = useState<MeetingQueryParams>({
-    page: 1,
-    limit: 12,
-    sort: 'latest',
-    status: 'RECRUITING',
+  const searchParams = useSearchParams();
+
+  const [filters, setFilters] = useState<MeetingQueryParams>(() => {
+    const categoryFromUrl = searchParams.get('category') as Category | null;
+    const sortFromUrl = searchParams.get('sort') as MeetingQueryParams['sort'] | null;
+    return {
+      page: 1,
+      limit: 12,
+      sort: sortFromUrl || 'latest',
+      status: 'RECRUITING',
+      category: categoryFromUrl || undefined,
+    };
   });
   const [searchInput, setSearchInput] = useState('');
+
+  useEffect(() => {
+    const categoryFromUrl = searchParams.get('category') as Category | null;
+    const sortFromUrl = searchParams.get('sort') as MeetingQueryParams['sort'] | null;
+
+    setFilters((prev) => ({
+      ...prev,
+      category: categoryFromUrl || undefined,
+      sort: sortFromUrl || prev.sort,
+      page: 1,
+    }));
+  }, [searchParams]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['meetings', filters],
@@ -172,5 +201,17 @@ export default function MeetingsPage() {
         </>
       )}
     </div>
+  );
+}
+
+// ================================
+// Exports
+// ================================
+
+export default function MeetingsPage() {
+  return (
+    <Suspense fallback={<div className="flex h-64 items-center justify-center text-gray-500">로딩 중...</div>}>
+      <MeetingsContent />
+    </Suspense>
   );
 }

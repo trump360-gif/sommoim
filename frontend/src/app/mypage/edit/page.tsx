@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { usersApi } from '@/lib/api/users';
@@ -9,6 +9,29 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { toast } from 'sonner';
+import {
+  Dumbbell,
+  Gamepad2,
+  UtensilsCrossed,
+  Theater,
+  Plane,
+  GraduationCap,
+  Check,
+} from 'lucide-react';
+
+// ================================
+// Constants
+// ================================
+
+const CATEGORIES = [
+  { value: 'SPORTS', label: '스포츠', icon: Dumbbell, color: 'bg-green-100 text-green-700 border-green-300' },
+  { value: 'GAMES', label: '게임', icon: Gamepad2, color: 'bg-purple-100 text-purple-700 border-purple-300' },
+  { value: 'FOOD', label: '음식', icon: UtensilsCrossed, color: 'bg-orange-100 text-orange-700 border-orange-300' },
+  { value: 'CULTURE', label: '문화', icon: Theater, color: 'bg-pink-100 text-pink-700 border-pink-300' },
+  { value: 'TRAVEL', label: '여행', icon: Plane, color: 'bg-blue-100 text-blue-700 border-blue-300' },
+  { value: 'STUDY', label: '스터디', icon: GraduationCap, color: 'bg-yellow-100 text-yellow-700 border-yellow-300' },
+];
 
 export default function EditProfilePage() {
   const router = useRouter();
@@ -16,7 +39,7 @@ export default function EditProfilePage() {
   const { isAuthenticated } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [formData, setFormData] = useState({ nickname: '', bio: '', avatarUrl: '' });
+  const [formData, setFormData] = useState({ nickname: '', bio: '', avatarUrl: '', interests: [] as string[] });
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -34,18 +57,28 @@ export default function EditProfilePage() {
     },
   });
 
-  useState(() => {
+  useEffect(() => {
     if (profile) {
       setFormData({
         nickname: profile.nickname || '',
         bio: profile.profile?.bio || '',
         avatarUrl: profile.profile?.avatarUrl || '',
+        interests: (profile.profile as any)?.interests || [],
       });
       if (profile.profile?.avatarUrl) {
         setPreviewUrl(profile.profile.avatarUrl);
       }
     }
-  });
+  }, [profile]);
+
+  const toggleInterest = (category: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      interests: prev.interests.includes(category)
+        ? prev.interests.filter((i) => i !== category)
+        : [...prev.interests, category],
+    }));
+  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -169,6 +202,36 @@ export default function EditProfilePage() {
                 maxLength={200}
               />
               <p className="mt-1 text-right text-xs text-gray-500">{formData.bio.length}/200</p>
+            </div>
+
+            {/* 관심사 선택 */}
+            <div>
+              <label className="mb-3 block text-sm font-medium">관심사</label>
+              <p className="text-xs text-gray-500 mb-3">관심 있는 모임 카테고리를 선택하세요 (추천 모임에 활용됩니다)</p>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {CATEGORIES.map((cat) => {
+                  const Icon = cat.icon;
+                  const isSelected = formData.interests.includes(cat.value);
+                  return (
+                    <button
+                      key={cat.value}
+                      type="button"
+                      onClick={() => toggleInterest(cat.value)}
+                      className={`relative flex items-center gap-2 rounded-xl border-2 px-3 py-2.5 transition-all ${
+                        isSelected
+                          ? `${cat.color} border-current`
+                          : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span className="text-sm font-medium">{cat.label}</span>
+                      {isSelected && (
+                        <Check className="absolute right-2 h-4 w-4" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             <div className="flex gap-3">

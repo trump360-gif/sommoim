@@ -1,25 +1,21 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
-import { usersApi, Participation, BookmarksResponse } from '@/lib/api/users';
-import { meetingsApi } from '@/lib/api/meetings';
+import { usersApi } from '@/lib/api/users';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { MeetingCard } from '@/components/meeting/meeting-card';
-import { MyCalendar } from '@/components/calendar/my-calendar';
+import { Calendar, Users, Bookmark, Edit } from 'lucide-react';
 
-type Tab = 'profile' | 'calendar' | 'participations' | 'bookmarks';
+// ================================
+// Component
+// ================================
 
 export default function MyPage() {
-  const router = useRouter();
-  const { logout, isAuthenticated } = useAuth();
-  const [activeTab, setActiveTab] = useState<Tab>('profile');
+  const { isAuthenticated, logout } = useAuth();
 
-  const { data: profile, isLoading } = useQuery({
+  const { data: profile } = useQuery({
     queryKey: ['me'],
     queryFn: usersApi.getMe,
     enabled: isAuthenticated,
@@ -28,205 +24,129 @@ export default function MyPage() {
   const { data: myMeetingsData } = useQuery({
     queryKey: ['my-meetings'],
     queryFn: () => usersApi.getMyMeetings(),
-    enabled: isAuthenticated && activeTab === 'participations',
+    enabled: isAuthenticated,
   });
 
-  const hostedMeetings = myMeetingsData?.hosted || [];
-  const participatedMeetings = myMeetingsData?.participated || [];
+  const hostedCount = myMeetingsData?.hosted?.length || 0;
+  const participatedCount = myMeetingsData?.participated?.length || 0;
 
-  const { data: bookmarks } = useQuery<BookmarksResponse>({
-    queryKey: ['my-bookmarks'],
-    queryFn: () => usersApi.getMyBookmarks(),
-    enabled: isAuthenticated && activeTab === 'bookmarks',
-  });
-
-  if (!isAuthenticated) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <p className="mb-4 text-gray-600">로그인이 필요합니다</p>
-          <Button onClick={() => router.push('/auth/login')}>로그인</Button>
-        </div>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-gray-500">로딩 중...</div>
-      </div>
-    );
-  }
-
-  const tabs: { key: Tab; label: string }[] = [
-    { key: 'profile', label: '프로필' },
-    { key: 'calendar', label: '내 일정' },
-    { key: 'participations', label: '참여 모임' },
-    { key: 'bookmarks', label: '북마크' },
-  ];
+  if (!profile) return null;
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
-      <h1 className="mb-8 text-3xl font-bold">마이페이지</h1>
-
-      <div className="mb-6 flex gap-2 border-b">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 font-medium ${activeTab === tab.key
-              ? 'border-b-2 border-primary-600 text-primary-600'
-              : 'text-gray-500 hover:text-gray-700'
-              }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-900">프로필</h1>
+        <Link href="/mypage/edit">
+          <Button variant="outline" size="sm">
+            <Edit className="mr-1.5 h-4 w-4" />
+            수정
+          </Button>
+        </Link>
       </div>
 
-      {activeTab === 'profile' && profile && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <h2 className="text-xl font-semibold">프로필 정보</h2>
-            <Link href="/mypage/edit">
-              <Button variant="outline" size="sm">수정</Button>
-            </Link>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-4">
-              <div className="h-20 w-20 overflow-hidden rounded-full bg-gray-200">
-                {profile.profile?.avatarUrl ? (
-                  <img src={profile.profile.avatarUrl} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-2xl text-gray-400">
-                    {profile.nickname?.charAt(0)}
-                  </div>
-                )}
-              </div>
-              <div>
-                <p className="text-xl font-semibold">{profile.nickname}</p>
-                <p className="text-sm text-gray-500">{profile.email}</p>
-              </div>
+      {/* Profile Card */}
+      <Card className="overflow-hidden">
+        <CardContent className="p-6">
+          <div className="flex items-start gap-6">
+            {/* Avatar */}
+            <div className="h-24 w-24 shrink-0 overflow-hidden rounded-full bg-gray-100">
+              {profile.profile?.avatarUrl ? (
+                <img src={profile.profile.avatarUrl} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-3xl font-medium text-gray-400">
+                  {profile.nickname?.charAt(0)}
+                </div>
+              )}
             </div>
-            <div>
-              <p className="mb-1 text-sm font-medium text-gray-500">자기소개</p>
-              <p>{profile.profile?.bio || '자기소개가 없습니다'}</p>
-            </div>
-            <div className="flex gap-8 text-sm">
-              <div>
-                <span className="font-semibold">{profile._count?.followers || 0}</span>
-                <span className="ml-1 text-gray-500">팔로워</span>
-              </div>
-              <div>
-                <span className="font-semibold">{profile._count?.following || 0}</span>
-                <span className="ml-1 text-gray-500">팔로잉</span>
-              </div>
-              <div>
-                <span className="font-semibold">{profile._count?.hostedMeetings || 0}</span>
-                <span className="ml-1 text-gray-500">만든 모임</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
-      {activeTab === 'calendar' && <MyCalendar />}
+            {/* Info */}
+            <div className="flex-1">
+              <h2 className="text-xl font-bold text-gray-900">{profile.nickname}</h2>
+              <p className="text-sm text-gray-500">{profile.email}</p>
 
-      {activeTab === 'participations' && (
-        <div className="space-y-8">
-          {/* Hosted Meetings */}
-          <div>
-            <h2 className="mb-4 text-xl font-bold tracking-tight">내가 만든 모임</h2>
-            {hostedMeetings.length === 0 ? (
-              <div className="rounded-2xl bg-gray-50 py-12 text-center text-gray-500">
-                <p>만든 모임이 없습니다</p>
-                <Link href="/meetings/create" className="mt-2 inline-block text-primary-600 hover:underline">
-                  모임 만들기
-                </Link>
+              <div className="mt-4">
+                <p className="text-sm font-medium text-gray-700">자기소개</p>
+                <p className="mt-1 text-gray-600">{profile.profile?.bio || '자기소개가 없습니다'}</p>
               </div>
-            ) : (
-              <div className="grid gap-4 sm:grid-cols-2">
-                {hostedMeetings.map((meeting: any) => (
-                  <Card key={meeting.id} className="overflow-hidden rounded-2xl border-0 shadow-soft transition-all hover:shadow-medium">
-                    <CardContent className="p-4">
-                      <div className="mb-2 flex items-center gap-2">
-                        <span className="rounded-full bg-primary-100 px-2.5 py-1 text-xs font-semibold text-primary-700">
-                          호스트
-                        </span>
-                        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${meeting.status === 'RECRUITING' ? 'bg-green-100 text-green-700' :
-                            meeting.status === 'ONGOING' ? 'bg-blue-100 text-blue-700' :
-                              'bg-gray-100 text-gray-700'
-                          }`}>
-                          {meeting.status === 'RECRUITING' ? '모집중' : meeting.status === 'ONGOING' ? '진행중' : meeting.status}
-                        </span>
-                      </div>
-                      <Link href={`/meetings/${meeting.id}`} className="block">
-                        <h3 className="mb-1 font-semibold text-gray-900 hover:text-primary-600">{meeting.title}</h3>
-                        <p className="line-clamp-2 text-sm text-gray-600">{meeting.description}</p>
-                      </Link>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+
+              {(profile.profile as any)?.location && (
+                <p className="mt-3 text-sm text-gray-500">📍 {(profile.profile as any).location}</p>
+              )}
+            </div>
           </div>
+        </CardContent>
+      </Card>
 
-          {/* Participated Meetings */}
-          <div>
-            <h2 className="mb-4 text-xl font-bold tracking-tight">참여 중인 모임</h2>
-            {participatedMeetings.length === 0 ? (
-              <div className="rounded-2xl bg-gray-50 py-12 text-center text-gray-500">
-                <p>참여한 모임이 없습니다</p>
-                <Link href="/meetings" className="mt-2 inline-block text-primary-600 hover:underline">
-                  모임 찾아보기
-                </Link>
+      {/* Stats Grid */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Link href="/mypage/meetings">
+          <Card className="transition-shadow hover:shadow-md">
+            <CardContent className="flex items-center gap-4 p-5">
+              <div className="rounded-lg bg-primary-100 p-3">
+                <Users className="h-5 w-5 text-primary-600" />
               </div>
-            ) : (
-              <div className="grid gap-4 sm:grid-cols-2">
-                {participatedMeetings.map((p: any) => (
-                  <Card key={p.id} className="overflow-hidden rounded-2xl border-0 shadow-soft transition-all hover:shadow-medium">
-                    <CardContent className="p-4">
-                      <div className="mb-2 flex items-center gap-2">
-                        <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-700">
-                          멤버
-                        </span>
-                        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${p.status === 'APPROVED' ? 'bg-green-100 text-green-700' :
-                            p.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
-                              'bg-gray-100 text-gray-700'
-                          }`}>
-                          {p.status === 'APPROVED' ? '승인됨' : p.status === 'PENDING' ? '대기중' : p.status}
-                        </span>
-                      </div>
-                      <Link href={`/meetings/${p.meeting.id}`} className="block">
-                        <h3 className="mb-1 font-semibold text-gray-900 hover:text-primary-600">{p.meeting.title}</h3>
-                        <p className="line-clamp-2 text-sm text-gray-600">{p.meeting.description}</p>
-                      </Link>
-                    </CardContent>
-                  </Card>
-                ))}
+              <div>
+                <p className="text-2xl font-bold text-gray-900">{hostedCount}</p>
+                <p className="text-sm text-gray-500">만든 모임</p>
               </div>
-            )}
-          </div>
-        </div>
-      )}
+            </CardContent>
+          </Card>
+        </Link>
 
-      {activeTab === 'bookmarks' && (
-        <div className="grid gap-6 sm:grid-cols-2">
-          {bookmarks?.data?.length === 0 ? (
-            <div className="col-span-full py-8 text-center text-gray-500">
-              <p>북마크한 모임이 없습니다</p>
-            </div>
-          ) : (
-            bookmarks?.data?.map((meeting: any) => (
-              <MeetingCard key={meeting.id} meeting={meeting} />
-            ))
-          )}
-        </div>
-      )}
+        <Link href="/mypage/meetings">
+          <Card className="transition-shadow hover:shadow-md">
+            <CardContent className="flex items-center gap-4 p-5">
+              <div className="rounded-lg bg-blue-100 p-3">
+                <Calendar className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-900">{participatedCount}</p>
+                <p className="text-sm text-gray-500">참여 모임</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
 
-      <div className="mt-8 border-t pt-8">
-        <Button variant="outline" onClick={logout}>
+        <Link href="/bookmarks">
+          <Card className="transition-shadow hover:shadow-md">
+            <CardContent className="flex items-center gap-4 p-5">
+              <div className="rounded-lg bg-amber-100 p-3">
+                <Bookmark className="h-5 w-5 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-900">-</p>
+                <p className="text-sm text-gray-500">북마크</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+      </div>
+
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader>
+          <h3 className="font-semibold text-gray-900">빠른 작업</h3>
+        </CardHeader>
+        <CardContent className="grid gap-3 sm:grid-cols-2">
+          <Link href="/meetings/create">
+            <Button variant="outline" className="w-full justify-start">
+              <Users className="mr-2 h-4 w-4" />
+              새 모임 만들기
+            </Button>
+          </Link>
+          <Link href="/meetings">
+            <Button variant="outline" className="w-full justify-start">
+              <Calendar className="mr-2 h-4 w-4" />
+              모임 둘러보기
+            </Button>
+          </Link>
+        </CardContent>
+      </Card>
+
+      {/* Logout */}
+      <div className="pt-4">
+        <Button variant="ghost" onClick={logout} className="text-gray-500">
           로그아웃
         </Button>
       </div>

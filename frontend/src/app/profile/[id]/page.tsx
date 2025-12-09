@@ -2,11 +2,14 @@
 
 import { use, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { usersApi, Profile } from '@/lib/api/users';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { getSampleAvatar } from '@/lib/sample-images';
+import { toast } from 'sonner';
+import { UserPlus, UserMinus, Ban, Flag } from 'lucide-react';
 
 const REPORT_REASONS = [
   { value: 'HARASSMENT', label: '괴롭힘' },
@@ -18,6 +21,7 @@ const REPORT_REASONS = [
 
 export default function ProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const router = useRouter();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [showReportModal, setShowReportModal] = useState(false);
@@ -31,12 +35,20 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
 
   const followMutation = useMutation({
     mutationFn: () => usersApi.follow(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['user-profile', id] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-profile', id] });
+      toast.success('팔로우했습니다');
+    },
+    onError: () => toast.error('팔로우에 실패했습니다'),
   });
 
   const unfollowMutation = useMutation({
     mutationFn: () => usersApi.unfollow(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['user-profile', id] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-profile', id] });
+      toast.success('언팔로우했습니다');
+    },
+    onError: () => toast.error('언팔로우에 실패했습니다'),
   });
 
   const blockMutation = useMutation({
@@ -96,27 +108,48 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
             </div>
             {!isOwnProfile && user && (
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => (profile as any).isFollowing ? unfollowMutation.mutate() : followMutation.mutate()}
-                  className="rounded-xl font-semibold shadow-sm transition-all hover:shadow-md"
-                >
-                  {(profile as any).isFollowing ? '언팔로우' : '팔로우'}
-                </Button>
+                {(profile as any).isFollowing ? (
+                  <Button
+                    variant="outline"
+                    onClick={() => unfollowMutation.mutate()}
+                    disabled={unfollowMutation.isPending}
+                    className="rounded-xl font-semibold shadow-sm transition-all hover:shadow-md"
+                  >
+                    <UserMinus className="mr-1.5 h-4 w-4" />
+                    팔로잉
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => followMutation.mutate()}
+                    disabled={followMutation.isPending}
+                    className="rounded-xl font-semibold shadow-sm transition-all hover:shadow-md"
+                  >
+                    <UserPlus className="mr-1.5 h-4 w-4" />
+                    팔로우
+                  </Button>
+                )}
               </div>
             )}
           </div>
         </CardHeader>
         <CardContent className="px-6 pb-6">
-          <div className="flex justify-center gap-12 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 p-6 sm:justify-start">
-            <div className="text-center">
+          <div className="flex justify-center gap-8 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 p-6 sm:justify-start">
+            <button
+              onClick={() => isOwnProfile && router.push('/mypage/followers')}
+              className={`text-center ${isOwnProfile ? 'cursor-pointer hover:opacity-70 transition-opacity' : ''}`}
+              disabled={!isOwnProfile}
+            >
               <p className="text-2xl font-bold text-gray-900">{profile._count?.followers || 0}</p>
               <p className="text-sm font-medium text-gray-500">팔로워</p>
-            </div>
-            <div className="text-center">
+            </button>
+            <button
+              onClick={() => isOwnProfile && router.push('/mypage/followers?tab=following')}
+              className={`text-center ${isOwnProfile ? 'cursor-pointer hover:opacity-70 transition-opacity' : ''}`}
+              disabled={!isOwnProfile}
+            >
               <p className="text-2xl font-bold text-gray-900">{profile._count?.following || 0}</p>
               <p className="text-sm font-medium text-gray-500">팔로잉</p>
-            </div>
+            </button>
             <div className="text-center">
               <p className="text-2xl font-bold text-gray-900">{profile._count?.hostedMeetings || 0}</p>
               <p className="text-sm font-medium text-gray-500">모임</p>

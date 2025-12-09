@@ -98,7 +98,15 @@ export const usersApi = {
   // 차단
   blockUser: (id: string) => api.post(`/users/${id}/block`),
   unblockUser: (id: string) => api.delete(`/users/${id}/block`),
-  getBlockedUsers: () => api.get<{ id: string; blocked: { id: string; nickname: string } }[]>('/users/me/blocked'),
+  getBlockedUsers: () => api.get<{
+    id: string;
+    createdAt: string;
+    blocked: {
+      id: string;
+      nickname: string;
+      profile?: { avatarUrl?: string };
+    };
+  }[]>('/users/me/blocked'),
 
   // 신고
   reportUser: (id: string, reason: string, description?: string) =>

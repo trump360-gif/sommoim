@@ -62,6 +62,8 @@ TabsContent.displayName = TabsPrimitive.Content.displayName;
 interface Tab {
   key: string;
   label: string;
+  icon?: React.ReactNode;
+  badge?: number;
 }
 
 interface SimpleTabsProps {
@@ -69,9 +71,37 @@ interface SimpleTabsProps {
   activeTab: string;
   onChange: (key: string) => void;
   className?: string;
+  variant?: 'default' | 'pills' | 'underline';
 }
 
-function SimpleTabs({ tabs, activeTab, onChange, className }: SimpleTabsProps) {
+function SimpleTabs({ tabs, activeTab, onChange, className, variant = 'underline' }: SimpleTabsProps) {
+  if (variant === 'pills') {
+    return (
+      <div className={cn('flex gap-2 rounded-lg bg-gray-100 p-1', className)}>
+        {tabs.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => onChange(tab.key)}
+            className={cn(
+              'flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all',
+              activeTab === tab.key
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            )}
+          >
+            {tab.icon}
+            {tab.label}
+            {tab.badge !== undefined && tab.badge > 0 && (
+              <span className="ml-1 rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-700">
+                {tab.badge}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className={cn('flex gap-1 border-b border-gray-200', className)}>
       {tabs.map((tab) => (
@@ -79,13 +109,24 @@ function SimpleTabs({ tabs, activeTab, onChange, className }: SimpleTabsProps) {
           key={tab.key}
           onClick={() => onChange(tab.key)}
           className={cn(
-            'px-4 py-2 text-sm font-medium transition-colors',
+            'flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors',
             activeTab === tab.key
               ? 'border-b-2 border-primary-600 text-primary-600'
               : 'text-gray-500 hover:text-gray-700'
           )}
         >
+          {tab.icon}
           {tab.label}
+          {tab.badge !== undefined && tab.badge > 0 && (
+            <span className={cn(
+              'ml-1 rounded-full px-2 py-0.5 text-xs font-medium',
+              activeTab === tab.key
+                ? 'bg-primary-100 text-primary-700'
+                : 'bg-gray-100 text-gray-600'
+            )}>
+              {tab.badge}
+            </span>
+          )}
         </button>
       ))}
     </div>

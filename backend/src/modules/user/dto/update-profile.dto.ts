@@ -1,4 +1,5 @@
-import { IsString, IsOptional, MaxLength } from 'class-validator';
+import { IsString, IsOptional, MaxLength, IsArray, IsEnum } from 'class-validator';
+import { Category } from '@prisma/client';
 
 export class UpdateProfileDto {
   @IsOptional()
@@ -18,4 +19,9 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsString()
   faceImageUrl?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsEnum(Category, { each: true })
+  interests?: Category[];
 }

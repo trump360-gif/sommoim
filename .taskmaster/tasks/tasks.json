@@ -225,13 +225,254 @@
         "priority": "high",
         "subtasks": [],
         "updatedAt": "2025-12-03T12:30:26.335Z"
+      },
+      {
+        "id": "13",
+        "title": "정모/번개 일정 관리 기능",
+        "description": "MeetingEvent 모델 기반 정모/번개 일정 CRUD, 참가 신청, QR 출석체크 기능 구현",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [
+          "7",
+          "8"
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Backend - Event API 확장",
+            "description": "EventController에 정모/번개 CRUD, 참가 신청/취소 API 추가",
+            "details": "",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 13,
+            "parentId": "undefined"
+          },
+          {
+            "id": 2,
+            "title": "Frontend - 일정 목록 페이지",
+            "description": "/meetings/[id]/events 페이지 구현, EventCard 컴포넌트",
+            "details": "",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 13,
+            "parentId": "undefined"
+          },
+          {
+            "id": 3,
+            "title": "Frontend - 일정 생성/상세 페이지",
+            "description": "일정 생성 폼, 상세 보기, 참가 신청 UI",
+            "details": "",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 13,
+            "parentId": "undefined"
+          },
+          {
+            "id": 4,
+            "title": "QR 출석체크 기능",
+            "description": "QR 코드 생성/스캔, 출석 처리 API 및 UI",
+            "details": "",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 13,
+            "parentId": "undefined"
+          }
+        ],
+        "updatedAt": "2025-12-06T15:05:15.434Z"
+      },
+      {
+        "id": "14",
+        "title": "활동 기록/갤러리 기능",
+        "description": "MeetingActivity 모델 기반 활동 기록 CRUD, 이미지 갤러리, 참석 여부 관리",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [
+          "7"
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Backend - Activity 모듈 생성",
+            "description": "ActivityController, ActivityService 생성, CRUD API 구현",
+            "details": "",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 14,
+            "parentId": "undefined"
+          },
+          {
+            "id": 2,
+            "title": "Frontend - 활동 목록/상세 페이지",
+            "description": "/meetings/[id]/activities 페이지, ActivityCard 컴포넌트",
+            "details": "",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 14,
+            "parentId": "undefined"
+          },
+          {
+            "id": 3,
+            "title": "이미지 갤러리 기능",
+            "description": "ActivityImage 업로드/조회, 갤러리 뷰어 컴포넌트",
+            "details": "",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 14,
+            "parentId": "undefined"
+          },
+          {
+            "id": 4,
+            "title": "참석 여부 관리",
+            "description": "ActivityAttendance CRUD, 참석/불참/미정 선택 UI",
+            "details": "",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 14,
+            "parentId": "undefined"
+          }
+        ],
+        "updatedAt": "2025-12-06T15:06:42.705Z"
+      },
+      {
+        "id": "15",
+        "title": "운영진 권한 관리 시스템",
+        "description": "MeetingStaff 모델 기반 공동운영자/매니저/스태프 권한 시스템 구현",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [
+          "7"
+        ],
+        "priority": "medium",
+        "subtasks": [],
+        "updatedAt": "2025-12-06T15:14:04.634Z"
+      },
+      {
+        "id": "16",
+        "title": "팔로우 시스템 구현",
+        "description": "Follow 모델 기반 사용자 팔로우/언팔로우, 팔로워/팔로잉 목록 페이지",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [
+          "5"
+        ],
+        "priority": "medium",
+        "subtasks": [],
+        "updatedAt": "2025-12-06T15:08:43.925Z"
+      },
+      {
+        "id": "17",
+        "title": "가입 질문/심사 기능",
+        "description": "JoinQuestion 모델 기반 모임 가입 시 질문 설정 및 답변 심사 기능",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [
+          "8"
+        ],
+        "priority": "medium",
+        "subtasks": [],
+        "updatedAt": "2025-12-09T12:58:31.568Z"
+      },
+      {
+        "id": "18",
+        "title": "관심사 설정 및 추천",
+        "description": "Profile.interests 기반 관심사 설정 UI, 관심사 기반 모임 추천 알고리즘",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [
+          "10"
+        ],
+        "priority": "low",
+        "subtasks": [],
+        "updatedAt": "2025-12-09T13:04:43.351Z"
+      },
+      {
+        "id": "19",
+        "title": "차단 관리 기능",
+        "description": "UserBlock 모델 기반 사용자 차단/해제, 차단 목록 관리 페이지",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [
+          "5"
+        ],
+        "priority": "low",
+        "subtasks": [],
+        "updatedAt": "2025-12-09T13:00:22.998Z"
+      },
+      {
+        "id": "20",
+        "title": "UI/UX 개선 - 메뉴 구조 변경",
+        "description": "헤더 드롭다운 메뉴, 모임 상세 탭 네비게이션, 마이페이지 사이드바, 관리자 시스템 메뉴 추가",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [
+          "10",
+          "11"
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "헤더 드롭다운 메뉴",
+            "description": "로그인 사용자 드롭다운 메뉴 (내 모임, 북마크, 알림, 설정)",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 20,
+            "updatedAt": "2025-12-06T14:49:31.773Z",
+            "parentId": "undefined"
+          },
+          {
+            "id": 2,
+            "title": "모임 상세 탭 네비게이션",
+            "description": "소개/일정/활동/멤버/채팅 탭 구조로 변경",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 20,
+            "parentId": "undefined",
+            "updatedAt": "2025-12-06T14:52:52.232Z"
+          },
+          {
+            "id": 3,
+            "title": "마이페이지 사이드바",
+            "description": "프로필/내 모임/북마크/팔로워/설정 사이드 네비게이션",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 20,
+            "parentId": "undefined",
+            "updatedAt": "2025-12-06T14:56:50.948Z"
+          },
+          {
+            "id": 4,
+            "title": "관리자 시스템 메뉴 추가",
+            "description": "시스템 설정/활동 로그/파일 관리 메뉴 추가",
+            "details": "",
+            "status": "in-progress",
+            "dependencies": [],
+            "parentTaskId": 20,
+            "parentId": "undefined",
+            "updatedAt": "2025-12-06T14:56:50.966Z"
+          }
+        ],
+        "updatedAt": "2025-12-06T15:01:23.704Z"
       }
     ],
     "metadata": {
       "version": "1.0.0",
-      "lastModified": "2025-12-03T12:30:26.335Z",
-      "taskCount": 12,
-      "completedCount": 11,
+      "lastModified": "2025-12-09T13:04:43.369Z",
+      "taskCount": 20,
+      "completedCount": 19,
       "tags": [
         "master"
       ]

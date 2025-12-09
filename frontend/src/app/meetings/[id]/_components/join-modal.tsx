@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { meetingsApi, JoinQuestion } from '@/lib/api/meetings';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { X, AlertCircle, User, HelpCircle } from 'lucide-react';
 
 // ================================
 // Types
@@ -49,12 +51,12 @@ export function JoinModal({ meetingId, isOpen, onClose, onSuccess }: JoinModalPr
       }),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['meeting', meetingId] });
-      alert(data.message);
+      toast.success(data.message);
       onSuccess();
       onClose();
     },
     onError: (error: any) => {
-      alert(error.response?.data?.message || '가입 신청에 실패했습니다');
+      toast.error(error.response?.data?.message || '가입 신청에 실패했습니다');
     },
   });
 

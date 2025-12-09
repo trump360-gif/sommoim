@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsBoolean, IsInt, IsObject } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsInt, IsObject, IsDateString } from 'class-validator';
 
 export class CreateSectionDto {
   @IsString()
@@ -20,8 +20,21 @@ export class CreateSectionDto {
 }
 
 export class CreateBannerDto {
+  @IsOptional()
   @IsString()
-  imageUrl: string;
+  imageUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @IsOptional()
+  @IsString()
+  subtitle?: string;
+
+  @IsOptional()
+  @IsString()
+  backgroundColor?: string;
 
   @IsOptional()
   @IsString()
@@ -33,6 +46,14 @@ export class CreateBannerDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  @IsDateString()
+  startDate?: string;
+
+  @IsOptional()
+  @IsDateString()
+  endDate?: string;
 }
 
 export class CreateCategoryDto {

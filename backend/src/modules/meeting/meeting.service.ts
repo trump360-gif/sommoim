@@ -300,4 +300,70 @@ export class MeetingService {
         return { createdAt: 'desc' };
     }
   }
+
+  // ================================
+  // Recommendations
+  // ================================
+
+  async getRecommended(userId: string, limit = 6) {
+    const profile = await this.prisma.profile.findUnique({
+      where: { userId },
+      select: { interests: true },
+    });
+
+    const interests = profile?.interests || [];
+
+    if (interests.length === 0) {
+      return this.getPopularMeetings(limit);
+    }
+
+    const participatedMeetingIds = await this.getParticipatedMeetingIds(userId);
+
+    const recommendations = await this.prisma.meeting.findMany({
+      where: {
+        deletedAt: null,
+        status: MeetingStatus.RECRUITING,
+        category: { in: interests },
+        hostId: { not: userId },
+        id: { notIn: participatedMeetingIds },
+      },
+      orderBy: [{ viewCount: 'desc' }, { createdAt: 'desc' }],
+      take: limit,
+      include: this.listInclude(),
+    });
+
+    if (recommendations.length < limit) {
+      const additionalMeetings = await this.prisma.meeting.findMany({
+        where: {
+          deletedAt: null,
+          status: MeetingStatus.RECRUITING,
+          hostId: { not: userId },
+          id: { notIn: [...participatedMeetingIds, ...recommendations.map((m) => m.id)] },
+        },
+        orderBy: { viewCount: 'desc' },
+        take: limit - recommendations.length,
+        include: this.listInclude(),
+      });
+      return [...recommendations, ...additionalMeetings];
+    }
+
+    return recommendations;
+  }
+
+  private async getPopularMeetings(limit: number) {
+    return this.prisma.meeting.findMany({
+      where: { deletedAt: null, status: MeetingStatus.RECRUITING },
+      orderBy: { viewCount: 'desc' },
+      take: limit,
+      include: this.listInclude(),
+    });
+  }
+
+  private async getParticipatedMeetingIds(userId: string): Promise<string[]> {
+    const participations = await this.prisma.participant.findMany({
+      where: { userId },
+      select: { meetingId: true },
+    });
+    return participations.map((p) => p.meetingId);
+  }
 }

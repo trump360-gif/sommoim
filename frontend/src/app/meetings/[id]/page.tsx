@@ -15,13 +15,27 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { SimpleTabs as Tabs } from '@/components/ui/tabs';
 import { ActivityList } from '@/components/meeting/activity-list';
+import { EventList } from '@/components/meeting/event-list';
+import { StaffManagement } from '@/components/meeting/staff-management';
+import { JoinQuestionsManager } from '@/components/meeting/join-questions-manager';
 import {
   categoryLabels,
   statusLabels,
   MeetingSidebar,
   MeetingInfoTab,
   MeetingReviewsTab,
+  ApplicationManager,
 } from './_components';
+import {
+  Info,
+  Calendar,
+  Image as ImageIcon,
+  Users,
+  MessageCircle,
+  Star,
+  Shield,
+  Settings,
+} from 'lucide-react';
 import { WithdrawModal } from './_components/withdraw-modal';
 
 // ================================
@@ -55,6 +69,12 @@ export default function MeetingDetailPage() {
     queryKey: ['reviews', meetingId],
     queryFn: () => reviewsApi.getByMeeting(meetingId),
     enabled: !!meeting && meeting.status === 'COMPLETED',
+  });
+
+  const { data: staffList = [] } = useQuery({
+    queryKey: ['meeting-staff', meetingId],
+    queryFn: () => meetingsApi.getStaffList(meetingId),
+    enabled: !!meeting,
   });
 
   // ================================
@@ -148,10 +168,20 @@ export default function MeetingDetailPage() {
   // Tabs Configuration
   // ================================
 
+  const participantCount = meeting.participants?.filter((p: any) => p.status === 'APPROVED').length || 0;
+  const staffMap = new Map(staffList.map((s: any) => [s.userId, s.role]));
+
   const tabs = [
-    { key: 'info', label: '모임 정보' },
-    { key: 'activities', label: '활동 기록' },
-    ...(meeting.status === 'COMPLETED' ? [{ key: 'reviews', label: '리뷰' }] : []),
+    { key: 'info', label: '소개', icon: <Info className="h-4 w-4" /> },
+    { key: 'events', label: '일정', icon: <Calendar className="h-4 w-4" /> },
+    { key: 'activities', label: '활동', icon: <ImageIcon className="h-4 w-4" /> },
+    { key: 'members', label: '멤버', icon: <Users className="h-4 w-4" />, badge: participantCount },
+    { key: 'chat', label: '채팅', icon: <MessageCircle className="h-4 w-4" /> },
+    ...(isHost ? [
+      { key: 'staff', label: '운영진', icon: <Shield className="h-4 w-4" /> },
+      { key: 'settings', label: '설정', icon: <Settings className="h-4 w-4" /> },
+    ] : []),
+    ...(meeting.status === 'COMPLETED' ? [{ key: 'reviews', label: '리뷰', icon: <Star className="h-4 w-4" /> }] : []),
   ];
 
   // ================================
@@ -175,8 +205,100 @@ export default function MeetingDetailPage() {
             <MeetingInfoTab meeting={meeting} meetingId={meetingId} isHost={isHost} isMember={isParticipant || isHost} />
           )}
 
+          {activeTab === 'events' && (
+            <div className="rounded-lg border border-gray-200 bg-white p-6">
+              <EventList meetingId={meetingId} isHost={isHost} isParticipant={isParticipant} />
+            </div>
+          )}
+
           {activeTab === 'activities' && (
             <ActivityList meetingId={meetingId} isHost={isHost} isParticipant={isParticipant} />
+          )}
+
+          {activeTab === 'members' && (
+            <div className="rounded-lg border border-gray-200 bg-white p-6">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-lg font-semibold">멤버 ({participantCount}명)</h3>
+                {isHost && (
+                  <Button variant="outline" size="sm" onClick={() => router.push(`/meetings/${meetingId}/participants`)}>
+                    멤버 관리
+                  </Button>
+                )}
+              </div>
+              <div className="space-y-3">
+                {/* Host */}
+                <div className="flex items-center gap-3 rounded-lg bg-gray-50 p-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100 text-primary-700 font-medium">
+                    {meeting.host.nickname.charAt(0)}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-900">{meeting.host.nickname}</p>
+                    <p className="text-xs text-gray-500">모임장</p>
+                  </div>
+                </div>
+                {/* Participants */}
+                {meeting.participants?.filter((p: any) => p.status === 'APPROVED').map((p: any) => {
+                  const staffRole = staffMap.get(p.user.id);
+                  const roleLabel = staffRole === 'CO_HOST' ? '공동운영자' : staffRole === 'MANAGER' ? '매니저' : staffRole === 'STAFF' ? '스태프' : '멤버';
+                  const roleColor = staffRole === 'CO_HOST' ? 'text-amber-600 bg-amber-100' : staffRole === 'MANAGER' ? 'text-blue-600 bg-blue-100' : staffRole === 'STAFF' ? 'text-green-600 bg-green-100' : '';
+                  return (
+                    <div key={p.id} className="flex items-center gap-3 rounded-lg p-3 hover:bg-gray-50">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-700 font-medium">
+                        {p.user.nickname.charAt(0)}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-gray-900">{p.user.nickname}</p>
+                          {staffRole && (
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${roleColor}`}>
+                              <Shield className="h-2.5 w-2.5" />
+                              {roleLabel}
+                            </span>
+                          )}
+                        </div>
+                        {!staffRole && <p className="text-xs text-gray-500">멤버</p>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'chat' && (
+            <div className="rounded-lg border border-gray-200 bg-white p-6">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-lg font-semibold">모임 채팅</h3>
+              </div>
+              {isParticipant || isHost ? (
+                <div className="text-center py-8">
+                  <MessageCircle className="mx-auto h-12 w-12 text-gray-300 mb-3" />
+                  <p className="text-gray-500 mb-4">채팅을 시작하세요</p>
+                  <Button onClick={() => router.push(`/meetings/${meetingId}/chat`)}>
+                    채팅방 입장
+                  </Button>
+                </div>
+              ) : (
+                <p className="text-center text-gray-500 py-8">멤버만 채팅에 참여할 수 있습니다</p>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'staff' && isHost && (
+            <StaffManagement
+              meetingId={meetingId}
+              participants={meeting.participants || []}
+            />
+          )}
+
+          {activeTab === 'settings' && isHost && (
+            <div className="space-y-6">
+              {/* 가입 신청 관리 */}
+              <ApplicationManager meetingId={meetingId} isHost={isHost} />
+
+              {/* 가입 질문 관리 */}
+              <JoinQuestionsManager meetingId={meetingId} />
+            </div>
           )}
 
           {activeTab === 'reviews' && meeting.status === 'COMPLETED' && (

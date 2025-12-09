@@ -33,7 +33,10 @@ export interface PageSection {
 
 export interface Banner {
   id: string;
-  imageUrl: string;
+  imageUrl?: string;
+  title?: string;
+  subtitle?: string;
+  backgroundColor?: string;
   linkUrl?: string;
   order: number;
   isActive: boolean;

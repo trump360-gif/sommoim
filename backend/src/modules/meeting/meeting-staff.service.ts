@@ -96,6 +96,15 @@ export class MeetingStaffService {
     return this.prisma.meetingStaff.findMany({
       where: { meetingId },
       orderBy: { createdAt: 'asc' },
+      include: {
+        user: {
+          select: {
+            id: true,
+            nickname: true,
+            profile: { select: { avatarUrl: true } },
+          },
+        },
+      },
     });
   }
 

@@ -1,8 +1,8 @@
-# 소모임 플랫폼 (Sommoim) - TRD v3.6
+# 소모임 플랫폼 (Sommoim) - TRD v3.7
 
-**작성일:** 2025-12-06
-**버전:** 3.6
-**상태:** 개발 진행 중 (Phase 1-6 완료)
+**작성일:** 2025-12-09
+**버전:** 3.7
+**상태:** 개발 진행 중 (Phase 1-7 완료)
 
 ---
 
@@ -119,7 +119,7 @@ User ──M:N──▶ User (Block)
 User ──M:N──▶ Meeting (Bookmark)
 ```
 
-### 3.2 주요 테이블 (19개 모델)
+### 3.2 주요 테이블 (22개 모델)
 
 #### User & Profile
 ```prisma
@@ -142,11 +142,12 @@ model User {
 }
 
 model Profile {
-  id        String  @id @default(cuid())
-  userId    String  @unique
+  id        String     @id @default(cuid())
+  userId    String     @unique
   avatarUrl String?
   bio       String?
-  user      User    @relation(fields: [userId], references: [id])
+  interests Category[] // 관심사 카테고리 배열
+  user      User       @relation(fields: [userId], references: [id])
 }
 ```
 
@@ -260,6 +261,62 @@ model CategoryEntity {
 }
 ```
 
+#### Staff & Join Questions (신규)
+```prisma
+model MeetingStaff {
+  id          String           @id @default(cuid())
+  meetingId   String
+  userId      String
+  role        StaffRole        @default(STAFF)
+  permissions StaffPermission[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  meeting     Meeting          @relation(fields: [meetingId], references: [id])
+  user        User             @relation(fields: [userId], references: [id])
+
+  @@unique([meetingId, userId])
+}
+
+enum StaffRole {
+  CO_HOST    // 공동호스트
+  MANAGER    // 매니저
+  STAFF      // 스태프
+}
+
+enum StaffPermission {
+  MANAGE_EVENTS
+  MANAGE_SCHEDULES
+  MANAGE_ACTIVITIES
+  MANAGE_MEMBERS
+  MANAGE_CHAT
+  VIEW_STATS
+}
+
+model JoinQuestion {
+  id         String      @id @default(cuid())
+  meetingId  String
+  question   String
+  isRequired Boolean     @default(true)
+  order      Int         @default(0)
+  createdAt  DateTime    @default(now())
+
+  meeting    Meeting     @relation(fields: [meetingId], references: [id])
+  answers    JoinAnswer[]
+}
+
+model JoinAnswer {
+  id            String       @id @default(cuid())
+  questionId    String
+  participantId String
+  answer        String
+  createdAt     DateTime     @default(now())
+
+  question      JoinQuestion @relation(fields: [questionId], references: [id])
+  participant   Participant  @relation(fields: [participantId], references: [id])
+}
+```
+
 ### 3.3 인덱스 전략
 
 ```prisma
@@ -312,7 +369,7 @@ model CategoryEntity {
 }
 ```
 
-### 4.2 구현된 API 엔드포인트 (60개+)
+### 4.2 구현된 API 엔드포인트 (80개+)
 
 #### 인증 (5개) ✅
 ```
@@ -378,6 +435,43 @@ POST   /api/reports          - 신고하기
 POST   /api/users/:id/block  - 사용자 차단
 DELETE /api/users/:id/block  - 차단 해제
 GET    /api/users/me/blocked - 차단 목록
+```
+
+#### 팔로우 (4개) ✅
+```
+POST   /api/users/:id/follow     - 팔로우
+DELETE /api/users/:id/follow     - 언팔로우
+GET    /api/users/:id/followers  - 팔로워 목록
+GET    /api/users/:id/following  - 팔로잉 목록
+```
+
+#### 운영진 (5개) ✅
+```
+GET    /api/meetings/:id/staff            - 운영진 목록
+POST   /api/meetings/:id/staff            - 운영진 추가
+PUT    /api/meetings/:id/staff/:userId    - 운영진 수정
+DELETE /api/meetings/:id/staff/:userId    - 운영진 삭제
+GET    /api/meetings/:id/my-role          - 내 역할 조회
+```
+
+#### 가입 질문 (8개) ✅
+```
+GET    /api/meetings/:id/join-questions         - 질문 목록
+POST   /api/meetings/:id/join-questions         - 질문 생성
+PUT    /api/meetings/join-questions/:id         - 질문 수정
+DELETE /api/meetings/join-questions/:id         - 질문 삭제
+POST   /api/meetings/:id/apply                  - 가입 신청
+GET    /api/meetings/:id/applications           - 신청 목록
+PUT    /api/meetings/applications/:id/review    - 신청 심사
+POST   /api/meetings/:id/applications/bulk      - 일괄 심사
+```
+
+#### 추천 (4개) ✅
+```
+GET    /api/meetings/recommended      - 맞춤 추천
+GET    /api/meetings/popular          - 인기 모임
+GET    /api/meetings/nearby           - 근처 모임
+GET    /api/meetings/category/:cat    - 카테고리별
 ```
 
 #### 채팅 (3개 + WebSocket) ✅
@@ -703,7 +797,18 @@ socket.on('message:new', handleNewMessage);
 - ✅ 로그인/회원가입 페이지 UI 개선
 - ✅ 마이페이지 기능 확장
 
-### Phase 7: 폴리싱 🔜 예정
+### Phase 7: 소셜 & 관리 기능 ✅ 완료
+- ✅ 운영진 권한 관리 (역할: CO_HOST/MANAGER/STAFF)
+- ✅ 운영진 권한 설정 (일정/활동/회원/채팅/통계)
+- ✅ 가입 질문 관리 (CRUD, 필수/선택)
+- ✅ 가입 신청 심사 (개별/일괄 승인/거절)
+- ✅ 관심사 설정 (프로필에서 카테고리 선택)
+- ✅ 관심사 기반 모임 추천 시스템
+- ✅ 차단 관리 페이지 (마이페이지)
+- ✅ 팔로우 시스템 (팔로우/언팔로우/목록)
+- ✅ 홈페이지 맞춤 추천 섹션
+
+### Phase 8: 폴리싱 🔜 예정
 - 🔜 이메일 인증
 - 🔜 비밀번호 재설정
 - 🔜 성능 최적화
@@ -748,10 +853,12 @@ NEXT_PUBLIC_API_URL=http://localhost:3000/api
 ### 10.2 Prisma 스키마
 
 ```
-19개 모델 구현 완료:
+22개 모델 구현 완료:
 - User, Profile, Follow
 - Meeting, MeetingSchedule
-- MeetingActivity, ActivityImage (신규)
+- MeetingActivity, ActivityImage
+- MeetingStaff (운영진)
+- JoinQuestion, JoinAnswer (가입 질문)
 - Participant, Review, Report
 - UserBlock, Notification, ChatMessage
 - Bookmark, PageSection, Banner

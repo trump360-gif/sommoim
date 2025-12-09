@@ -254,8 +254,8 @@ export interface MeetingStaff {
   createdAt: string;
   user?: {
     id: string;
-    name: string;
-    profileImage?: string;
+    nickname: string;
+    profile?: { avatarUrl?: string };
   };
 }
 
