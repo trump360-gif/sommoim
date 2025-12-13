@@ -131,4 +131,43 @@ export class UserService {
     const user = await this.prisma.user.findUnique({ where: { id, deletedAt: null } });
     if (!user) throw new NotFoundException('사용자를 찾을 수 없습니다');
   }
+
+  async getMyRecentActivities(userId: string, limit = 10) {
+    // 내가 참여한 모임의 ID 목록 조회
+    const myParticipations = await this.prisma.participant.findMany({
+      where: { userId, status: 'APPROVED' },
+      select: { meetingId: true },
+    });
+    const myMeetingIds = myParticipations.map((p) => p.meetingId);
+
+    // 내가 호스트인 모임도 포함
+    const myHostedMeetings = await this.prisma.meeting.findMany({
+      where: { hostId: userId, deletedAt: null },
+      select: { id: true },
+    });
+    myMeetingIds.push(...myHostedMeetings.map((m) => m.id));
+
+    if (myMeetingIds.length === 0) {
+      return [];
+    }
+
+    // 해당 모임들의 최근 활동 조회
+    const activities = await this.prisma.meetingActivity.findMany({
+      where: { meetingId: { in: myMeetingIds } },
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        meeting: { select: { id: true, title: true } },
+      },
+    });
+
+    return activities.map((a) => ({
+      id: a.id,
+      type: 'ACTIVITY' as const,
+      message: a.title,
+      meetingId: a.meeting.id,
+      meetingTitle: a.meeting.title,
+      createdAt: a.createdAt.toISOString(),
+    }));
+  }
 }

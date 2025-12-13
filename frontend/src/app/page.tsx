@@ -100,8 +100,8 @@ function MeetingsSection({
                 </Link>
             </div>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                {meetings?.map((meeting) => (
-                    <MeetingCard key={meeting.id} meeting={meeting} />
+                {meetings?.map((meeting, index) => (
+                    <MeetingCard key={meeting.id} meeting={meeting} priority={index < 4} />
                 ))}
                 {!meetings?.length && (
                     <p className="col-span-full rounded-2xl bg-gray-50 py-16 text-center text-gray-500">아직 모임이 없습니다</p>
@@ -129,9 +129,9 @@ function RecommendedSection({ meetings }: { meetings: RecommendedMeeting[] }) {
                 </Link>
             </div>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                {meetings.map((meeting) => (
+                {meetings.map((meeting, index) => (
                     <div key={meeting.id} className="relative">
-                        <MeetingCard meeting={meeting} />
+                        <MeetingCard meeting={meeting} priority={index < 4} />
                         {meeting.reason && meeting.reason.length > 0 && (
                             <div className="absolute -top-2 left-3 flex flex-wrap gap-1">
                                 {meeting.reason.slice(0, 2).map((r, i) => (
@@ -224,8 +224,9 @@ export default function HomePage() {
     });
 
     const { data: recentActivities, isLoading: activitiesLoading } = useQuery<RecentActivity[]>({
-        queryKey: ['public', 'recent-activities'],
-        queryFn: () => statsApi.getRecentActivities(8),
+        queryKey: ['my', 'recent-activities'],
+        queryFn: () => statsApi.getMyRecentActivities(8),
+        enabled: isAuthenticated,
     });
 
     const categories = adminCategories?.length
@@ -288,8 +289,10 @@ export default function HomePage() {
             {/* 트렌딩 모임 섹션 */}
             <TrendingSection meetings={trendingMeetings?.data} isLoading={trendingLoading} />
 
-            {/* 최근 활동 섹션 */}
-            <RecentActivitySection activities={recentActivities} isLoading={activitiesLoading} />
+            {/* 최근 활동 섹션 - 로그인 사용자만 (내가 참여한 모임의 활동) */}
+            {isAuthenticated && (
+                <RecentActivitySection activities={recentActivities} isLoading={activitiesLoading} />
+            )}
         </div>
     );
 }

@@ -142,7 +142,7 @@ export default function MyMeetingsPage() {
         </Card>
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {displayMeetings.map((meeting) => (
+          {displayMeetings.map((meeting, index) => (
             <div key={meeting.id} className="relative">
               {activeTab === 'hosted' && (
                 <div className="absolute -top-2 -left-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-amber-500 shadow-lg">
@@ -158,6 +158,7 @@ export default function MyMeetingsPage() {
                       fill
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      priority={index < 3}
                     />
                     <div className="absolute left-3 top-3">
                       <span className="rounded-full bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white shadow-lg">

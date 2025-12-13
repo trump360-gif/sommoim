@@ -7,9 +7,10 @@ import { categoryLabels, statusLabels } from '@/shared';
 
 interface MeetingCardProps {
   meeting: Meeting;
+  priority?: boolean;
 }
 
-export function MeetingCard({ meeting }: MeetingCardProps) {
+export function MeetingCard({ meeting, priority = false }: MeetingCardProps) {
   const participantCount = meeting._count?.participants ?? 0;
 
   return (
@@ -23,6 +24,7 @@ export function MeetingCard({ meeting }: MeetingCardProps) {
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="object-cover transition-transform duration-300 group-hover:scale-105"
+              priority={priority}
             />
           ) : (
             <Image
@@ -31,6 +33,7 @@ export function MeetingCard({ meeting }: MeetingCardProps) {
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="object-cover transition-transform duration-300 group-hover:scale-105"
+              priority={priority}
             />
           )}
           <div className="absolute left-3 top-3">

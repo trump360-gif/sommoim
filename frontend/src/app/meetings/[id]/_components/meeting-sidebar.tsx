@@ -6,8 +6,12 @@
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Bookmark } from 'lucide-react';
+import { meetingsApi } from '@/lib/api/meetings';
+import { cn } from '@/lib/utils';
 import type { Meeting } from '@/types';
 
 interface MeetingSidebarProps {
@@ -42,11 +46,46 @@ export function MeetingSidebar({
   isCancelling,
 }: MeetingSidebarProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
+
+  const isBookmarked = (meeting as any).isBookmarked ?? false;
+
+  const bookmarkMutation = useMutation({
+    mutationFn: () => (isBookmarked ? meetingsApi.unbookmark(meetingId) : meetingsApi.bookmark(meetingId)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['meeting', meetingId] });
+      queryClient.invalidateQueries({ queryKey: ['my-bookmarks'] });
+    },
+  });
+
+  const handleBookmark = () => {
+    if (!isAuthenticated) {
+      router.push('/auth/login');
+      return;
+    }
+    bookmarkMutation.mutate();
+  };
 
   return (
     <div className="space-y-6">
       <HostCard meeting={meeting} />
       <MeetingInfoCard meeting={meeting} />
+
+      {/* Bookmark Button */}
+      <Button
+        variant="outline"
+        className={cn(
+          'w-full gap-2',
+          isBookmarked && 'border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100'
+        )}
+        onClick={handleBookmark}
+        disabled={bookmarkMutation.isPending}
+      >
+        <Bookmark className={cn('h-4 w-4', isBookmarked && 'fill-current')} />
+        {bookmarkMutation.isPending
+          ? (isBookmarked ? '해제 중...' : '저장 중...')
+          : (isBookmarked ? '북마크됨' : '북마크')}
+      </Button>
 
       {/* Chat Button */}
       {(isHost || participantStatus === 'APPROVED') && (

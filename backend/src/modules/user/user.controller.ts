@@ -62,6 +62,14 @@ export class UserController {
     return this.calendarService.getMyCalendarEvents(userId, query);
   }
 
+  @Get('me/recent-activities')
+  getMyRecentActivities(
+    @CurrentUser('id') userId: string,
+    @Query('limit') limit = 10,
+  ) {
+    return this.userService.getMyRecentActivities(userId, +limit);
+  }
+
   @Get(':id')
   getUserById(@Param('id') id: string, @CurrentUser('id') currentUserId?: string) {
     return this.userService.getUserById(id, currentUserId);

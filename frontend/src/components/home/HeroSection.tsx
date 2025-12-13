@@ -108,7 +108,7 @@ export function HeroSection({ section }: HeroSectionProps) {
         animation={heroLayout.bgAnimation || 'none'}
         bgColor={heroLayout.bgColor || '#6366f1'}
         bgColorEnd={heroLayout.bgColorEnd || '#8b5cf6'}
-        bgImage={heroLayout.bgImage}
+        bgImage={heroLayout.bgImage || '/images/sample/hero-banner.jpg'}
         className="rounded-3xl"
       />
 

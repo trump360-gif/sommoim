@@ -147,15 +147,36 @@ async function seedSections() {
 async function seedBanners() {
   console.log('Seeding banners...');
   const banners = [
-    { imageUrl: 'https://picsum.photos/seed/banner1/800/450', linkUrl: '/meetings', order: 1, isActive: true },
-    { imageUrl: 'https://picsum.photos/seed/banner2/800/450', linkUrl: '/meetings?sort=popular', order: 2, isActive: true },
-    { imageUrl: 'https://picsum.photos/seed/banner3/800/450', linkUrl: '/meetings/create', order: 3, isActive: true },
+    {
+      title: '함께하면 더 즐거운 모임',
+      subtitle: '관심사가 같은 사람들과 새로운 경험을 시작하세요',
+      imageUrl: '/images/sample/banner-1.jpg',
+      linkUrl: '/meetings',
+      order: 1,
+      isActive: true
+    },
+    {
+      title: '인기 모임 둘러보기',
+      subtitle: '지금 가장 핫한 모임에 참여해보세요',
+      imageUrl: '/images/sample/banner-2.jpg',
+      linkUrl: '/meetings?sort=popular',
+      order: 2,
+      isActive: true
+    },
+    {
+      title: '나만의 모임 만들기',
+      subtitle: '당신의 취미를 함께 나눌 친구를 찾아보세요',
+      imageUrl: '/images/sample/banner-3.jpg',
+      linkUrl: '/meetings/create',
+      order: 3,
+      isActive: true
+    },
   ];
-  const existingCount = await prisma.banner.count();
-  if (existingCount === 0) {
-    for (const b of banners) {
-      await prisma.banner.create({ data: b });
-    }
+
+  // 기존 배너 삭제 후 새로 생성
+  await prisma.banner.deleteMany();
+  for (const b of banners) {
+    await prisma.banner.create({ data: b });
   }
   console.log('  - Banners added');
 }

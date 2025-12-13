@@ -49,6 +49,10 @@ export const meetingsApi = {
   delete: (id: string) => api.delete<void>(`/meetings/${id}`),
   cancel: (id: string) => api.post<{ message: string }>(`/meetings/${id}/cancel`),
 
+  // 북마크
+  bookmark: (id: string) => api.post<{ message: string }>(`/meetings/${id}/bookmark`),
+  unbookmark: (id: string) => api.delete<{ message: string }>(`/meetings/${id}/bookmark`),
+
   // 추천
   getRecommended: (limit?: number) =>
     api.get<RecommendedMeeting[]>('/meetings/recommended', { params: { limit } }),

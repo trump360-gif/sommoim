@@ -25,9 +25,16 @@ export const statsApi = {
   },
 
   /**
-   * 최근 활동 피드 조회
+   * 최근 활동 피드 조회 (공개)
    */
   getRecentActivities: async (limit: number = 10): Promise<RecentActivity[]> => {
     return api.get<RecentActivity[]>('/public/recent-activities', { params: { limit } });
+  },
+
+  /**
+   * 내가 참여한 모임의 최근 활동 조회 (로그인 필요)
+   */
+  getMyRecentActivities: async (limit: number = 10): Promise<RecentActivity[]> => {
+    return api.get<RecentActivity[]>('/users/me/recent-activities', { params: { limit } });
   },
 };

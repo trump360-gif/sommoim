@@ -64,15 +64,13 @@ export class UserMeetingService {
         }));
 
         // Format participated meetings (exclude if user is host)
+        // Flatten structure to match hosted format
         const participated = participations
             .filter((p) => p.meeting.hostId !== userId)
             .map((p) => ({
-                id: p.id,
-                status: p.status,
-                meeting: {
-                    ...p.meeting,
-                    role: 'MEMBER' as const,
-                },
+                ...p.meeting,
+                role: 'MEMBER' as const,
+                participantStatus: p.status,
             }));
 
         return {

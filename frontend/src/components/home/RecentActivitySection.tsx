@@ -139,7 +139,39 @@ export function RecentActivitySection({ activities, isLoading }: RecentActivityS
   }
 
   if (!displayActivities.length) {
-    return null;
+    return (
+      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <ScrollReveal animation="slideUp">
+          <div className="mb-8 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500">
+              <MessageSquare className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-3xl font-bold tracking-tight">최근 활동</h2>
+              <p className="mt-1 text-gray-600">내 모임에서 일어나는 일들</p>
+            </div>
+          </div>
+        </ScrollReveal>
+
+        <ScrollReveal animation="fadeIn" delay={0.2}>
+          <div className="rounded-2xl bg-white p-8 text-center shadow-soft">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
+              <Activity className="h-8 w-8 text-gray-400" />
+            </div>
+            <h3 className="mb-2 text-lg font-semibold text-gray-900">아직 활동이 없어요</h3>
+            <p className="mb-4 text-gray-500">
+              모임에 참여하면 이곳에서 최근 활동을 확인할 수 있어요
+            </p>
+            <Link
+              href="/meetings"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700"
+            >
+              모임 둘러보기
+            </Link>
+          </div>
+        </ScrollReveal>
+      </section>
+    );
   }
 
   return (
@@ -151,7 +183,7 @@ export function RecentActivitySection({ activities, isLoading }: RecentActivityS
           </div>
           <div>
             <h2 className="text-3xl font-bold tracking-tight">최근 활동</h2>
-            <p className="mt-1 text-gray-600">커뮤니티에서 일어나는 일들</p>
+            <p className="mt-1 text-gray-600">내 모임에서 일어나는 일들</p>
           </div>
         </div>
       </ScrollReveal>

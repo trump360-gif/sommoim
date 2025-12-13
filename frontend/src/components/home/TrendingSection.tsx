@@ -134,7 +134,7 @@ export function TrendingSection({ meetings, isLoading }: TrendingSectionProps) {
         {displayMeetings.map((meeting, index) => (
           <StaggerItem key={meeting.id} className="relative">
             <RankBadge rank={index + 1} />
-            <MeetingCard meeting={meeting} />
+            <MeetingCard meeting={meeting} priority={index < 4} />
           </StaggerItem>
         ))}
       </StaggerContainer>

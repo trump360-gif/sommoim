@@ -16,7 +16,7 @@ import {
   Search,
   Trash2,
   Download,
-  Image,
+  Image as ImageIcon,
   FileText,
   File,
   Film,
@@ -41,7 +41,7 @@ const FILE_TABS = [
 // ================================
 function getFileIcon(fileType: string) {
   if (fileType.startsWith('image/')) {
-    return <Image className="h-5 w-5 text-blue-500" />;
+    return <ImageIcon className="h-5 w-5 text-blue-500" />;
   }
   if (fileType.includes('pdf') || fileType.includes('document')) {
     return <FileText className="h-5 w-5 text-orange-500" />;
@@ -176,7 +176,7 @@ export default function AdminFilesPage() {
         <Card>
           <CardContent className="flex items-center gap-3 p-4">
             <div className="rounded-lg bg-green-100 p-2">
-              <Image className="h-5 w-5 text-green-600" />
+              <ImageIcon className="h-5 w-5 text-green-600" />
             </div>
             <div>
               <p className="text-2xl font-bold">{stats.byType.image?.count || 0}</p>

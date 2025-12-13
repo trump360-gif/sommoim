@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
+import { usersApi } from '@/lib/api/users';
 import { Button } from '@/components/ui/button';
 import { NotificationDropdown } from './notification-dropdown';
 import { MobileNav } from './MobileNav';
@@ -74,6 +76,22 @@ export function Header() {
   const { user, isAuthenticated, logout } = useAuth();
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+
+  // Fetch user stats
+  const { data: myMeetingsData } = useQuery({
+    queryKey: ['my-meetings'],
+    queryFn: () => usersApi.getMyMeetings(),
+    enabled: isAuthenticated,
+  });
+
+  const { data: bookmarksData } = useQuery({
+    queryKey: ['my-bookmarks'],
+    queryFn: () => usersApi.getMyBookmarks(),
+    enabled: isAuthenticated,
+  });
+
+  const participatedCount = (myMeetingsData?.hosted?.length || 0) + (myMeetingsData?.participated?.length || 0);
+  const bookmarkCount = bookmarksData?.meta?.total || bookmarksData?.data?.length || 0;
 
   return (
     <header className="fixed left-0 right-0 top-0 z-50 border-b border-gray-200/80 bg-white/80 backdrop-blur-md transition-all duration-300 supports-[backdrop-filter]:bg-white/60">
@@ -216,13 +234,13 @@ export function Header() {
             {/* Quick Stats */}
             <div className="mt-6 flex items-center justify-between border-t border-gray-100 pt-4">
               <div className="flex gap-6">
-                <Link href="/mypage" className="group flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900">
+                <Link href="/mypage/meetings" className="group flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900">
                   <Calendar className="h-4 w-4" />
-                  <span>참여 모임 <strong className="text-gray-900">3</strong>개</span>
+                  <span>참여 모임 <strong className="text-gray-900">{participatedCount}</strong>개</span>
                 </Link>
                 <Link href="/bookmarks" className="group flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900">
                   <Bookmark className="h-4 w-4" />
-                  <span>북마크 <strong className="text-gray-900">5</strong>개</span>
+                  <span>북마크 <strong className="text-gray-900">{bookmarkCount}</strong>개</span>
                 </Link>
               </div>
               <Link
