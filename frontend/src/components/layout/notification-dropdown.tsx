@@ -221,10 +221,10 @@ export function NotificationDropdown() {
                   {/* 삭제 버튼 */}
                   <button
                     onClick={(e) => handleDelete(e, notification.id)}
-                    className="absolute right-2 top-2 rounded-full p-1 text-gray-400 opacity-0 transition-opacity hover:bg-gray-200 hover:text-gray-600 group-hover:opacity-100"
+                    className="absolute right-2 top-2 z-10 rounded-full p-1.5 text-gray-400 transition-all hover:bg-red-100 hover:text-red-600"
                     aria-label="알림 삭제"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-3.5 w-3.5" />
                   </button>
 
                   <div className="mb-1 flex items-center gap-2 pr-6">
