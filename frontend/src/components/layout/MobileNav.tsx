@@ -52,8 +52,7 @@ const NAV_ITEMS: NavItem[] = [
 
 const USER_MENU_ITEMS: NavItem[] = [
   { label: '프로필 수정', href: '/mypage/edit', icon: <User className="h-5 w-5" /> },
-  { label: '팔로워', href: '/mypage/followers', icon: <Heart className="h-5 w-5" /> },
-  { label: '팔로잉', href: '/mypage/following', icon: <Users className="h-5 w-5" /> },
+  { label: '팔로워/팔로잉', href: '/mypage/followers', icon: <Heart className="h-5 w-5" /> },
   { label: '계정 설정', href: '/mypage/settings', icon: <Settings className="h-5 w-5" /> },
 ];
 

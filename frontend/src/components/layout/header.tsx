@@ -55,8 +55,7 @@ const myMenuSections: MegaMenuSection[] = [
   {
     title: '소셜',
     items: [
-      { label: '팔로워', href: '/mypage/followers', icon: <Heart className="h-4 w-4" />, description: '나를 팔로우' },
-      { label: '팔로잉', href: '/mypage/following', icon: <Users className="h-4 w-4" />, description: '내가 팔로우' },
+      { label: '팔로워/팔로잉', href: '/mypage/followers', icon: <Heart className="h-4 w-4" />, description: '소셜 네트워크' },
     ],
   },
   {
