@@ -4,7 +4,13 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { X } from 'lucide-react';
 import { notificationsApi, Notification } from '@/lib/api/notifications';
+import { toast } from 'sonner';
+
+// ================================
+// Constants
+// ================================
 
 const typeLabels: Record<string, string> = {
   PARTICIPANT_APPROVED: '참가 승인',
@@ -16,6 +22,10 @@ const typeLabels: Record<string, string> = {
   NEW_APPLICATION: '새 참가 신청',
   MEMBER_WITHDRAWN: '멤버 탈퇴',
 };
+
+// ================================
+// Helper Functions
+// ================================
 
 function formatDate(dateString: string) {
   const date = new Date(dateString);
@@ -32,9 +42,14 @@ function formatDate(dateString: string) {
   return date.toLocaleDateString('ko-KR');
 }
 
+// ================================
+// Component
+// ================================
+
 export function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -42,11 +57,15 @@ export function NotificationDropdown() {
   const { data: unreadNotifications = [] } = useQuery({
     queryKey: ['notifications', 'unread'],
     queryFn: () => notificationsApi.getUnread(),
-    refetchInterval: 30000, // 30초마다 자동 새로고침
+    refetchInterval: 30000,
     staleTime: 10000,
   });
 
   const unreadCount = unreadNotifications.length;
+
+  // ================================
+  // Mutations
+  // ================================
 
   const markAsReadMutation = useMutation({
     mutationFn: notificationsApi.markAsRead,
@@ -64,6 +83,22 @@ export function NotificationDropdown() {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: notificationsApi.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread'] });
+      toast.success('알림이 삭제되었습니다');
+    },
+    onError: () => {
+      toast.error('알림 삭제에 실패했습니다');
+    },
+  });
+
+  // ================================
+  // Effects
+  // ================================
+
   // 외부 클릭 시 드롭다운 닫기
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -75,6 +110,32 @@ export function NotificationDropdown() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // 타이머 정리
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // ================================
+  // Handlers
+  // ================================
+
+  const handleMouseEnter = () => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+  };
+
+  const handleMouseLeave = () => {
+    closeTimeoutRef.current = setTimeout(() => {
+      setIsOpen(false);
+    }, 300); // 300ms 후 자동 닫힘
+  };
+
   const handleNotificationClick = (notification: Notification) => {
     if (!notification.isRead) {
       markAsReadMutation.mutate(notification.id);
@@ -85,8 +146,22 @@ export function NotificationDropdown() {
     }
   };
 
+  const handleDelete = (e: React.MouseEvent, notificationId: string) => {
+    e.stopPropagation(); // 상위 클릭 이벤트 방지
+    deleteMutation.mutate(notificationId);
+  };
+
+  // ================================
+  // Render
+  // ================================
+
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div
+      className="relative"
+      ref={dropdownRef}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       {/* 알림 버튼 */}
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -140,10 +215,19 @@ export function NotificationDropdown() {
               unreadNotifications.slice(0, 5).map((notification: Notification) => (
                 <div
                   key={notification.id}
+                  className="group relative cursor-pointer border-b border-gray-50 px-4 py-3 hover:bg-gray-50"
                   onClick={() => handleNotificationClick(notification)}
-                  className="cursor-pointer border-b border-gray-50 px-4 py-3 hover:bg-gray-50"
                 >
-                  <div className="mb-1 flex items-center gap-2">
+                  {/* 삭제 버튼 */}
+                  <button
+                    onClick={(e) => handleDelete(e, notification.id)}
+                    className="absolute right-2 top-2 rounded-full p-1 text-gray-400 opacity-0 transition-opacity hover:bg-gray-200 hover:text-gray-600 group-hover:opacity-100"
+                    aria-label="알림 삭제"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+
+                  <div className="mb-1 flex items-center gap-2 pr-6">
                     <span className="rounded bg-primary-100 px-1.5 py-0.5 text-xs font-medium text-primary-700">
                       {typeLabels[notification.type] || notification.type}
                     </span>
@@ -153,7 +237,7 @@ export function NotificationDropdown() {
                       </span>
                     )}
                   </div>
-                  <p className="text-sm font-medium text-gray-900">{notification.title}</p>
+                  <p className="text-sm font-medium text-gray-900 pr-6">{notification.title}</p>
                   <p className="line-clamp-2 text-xs text-gray-600">{notification.message}</p>
                   <p className="mt-1 text-xs text-gray-400">{formatDate(notification.createdAt)}</p>
                 </div>
