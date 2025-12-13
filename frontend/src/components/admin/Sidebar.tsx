@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import {
     LayoutDashboard,
     Users,
@@ -18,17 +19,28 @@ import {
     type LucideIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { adminApi } from '@/lib/api/admin';
+
+// ================================
+// Types & Interfaces
+// ================================
 
 interface NavItem {
     label: string;
     href: string;
     icon: LucideIcon;
+    badgeKey?: string;
 }
 
 interface NavSection {
     title: string;
     items: NavItem[];
 }
+
+// ================================
+// Constants
+// ================================
 
 const navSections: NavSection[] = [
     {
@@ -37,7 +49,7 @@ const navSections: NavSection[] = [
             { label: '대시보드', href: '/admin', icon: LayoutDashboard },
             { label: '사용자', href: '/admin/users', icon: Users },
             { label: '모임', href: '/admin/meetings', icon: Calendar },
-            { label: '신고', href: '/admin/reports', icon: Flag },
+            { label: '신고', href: '/admin/reports', icon: Flag, badgeKey: 'pendingReports' },
         ],
     },
     {
@@ -58,8 +70,26 @@ const navSections: NavSection[] = [
     },
 ];
 
+// ================================
+// Component
+// ================================
+
 export function AdminSidebar() {
     const pathname = usePathname();
+    const { user } = useAuth();
+
+    // 대시보드 통계 가져오기 (배지용)
+    const { data: dashboardStats } = useQuery({
+        queryKey: ['admin', 'dashboard'],
+        queryFn: () => adminApi.getDashboard(),
+        refetchInterval: 60000, // 1분마다 새로고침
+    });
+
+    // 배지 값 가져오기 헬퍼
+    const getBadgeValue = (key?: string): number | undefined => {
+        if (!key || !dashboardStats) return undefined;
+        return (dashboardStats as unknown as Record<string, number>)[key];
+    };
 
     return (
         <aside className="hidden lg:flex lg:flex-col lg:w-64 bg-gray-900 text-white">
@@ -89,6 +119,7 @@ export function AdminSidebar() {
                             {section.items.map((item) => {
                                 const Icon = item.icon;
                                 const isActive = pathname === item.href;
+                                const badgeValue = getBadgeValue(item.badgeKey);
 
                                 return (
                                     <Link
@@ -103,7 +134,13 @@ export function AdminSidebar() {
                                     >
                                         <Icon className="h-5 w-5" />
                                         <span>{item.label}</span>
-                                        {isActive && (
+                                        {/* 배지 표시 */}
+                                        {badgeValue !== undefined && badgeValue > 0 && (
+                                            <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-bold text-white">
+                                                {badgeValue > 99 ? '99+' : badgeValue}
+                                            </span>
+                                        )}
+                                        {isActive && !badgeValue && (
                                             <ChevronRight className="ml-auto h-4 w-4" />
                                         )}
                                     </Link>
@@ -114,15 +151,25 @@ export function AdminSidebar() {
                 ))}
             </nav>
 
-            {/* Footer */}
+            {/* Footer - 실제 사용자 정보 */}
             <div className="p-4 border-t border-gray-800">
                 <div className="flex items-center gap-3 px-3 py-2">
-                    <div className="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center">
-                        <span className="text-sm font-medium">A</span>
-                    </div>
+                    {user?.profile?.avatarUrl ? (
+                        <img
+                            src={user.profile.avatarUrl}
+                            alt={user.nickname || 'Admin'}
+                            className="h-8 w-8 rounded-full object-cover"
+                        />
+                    ) : (
+                        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary-500 to-violet-500 flex items-center justify-center">
+                            <span className="text-sm font-medium text-white">
+                                {user?.nickname?.charAt(0).toUpperCase() || 'A'}
+                            </span>
+                        </div>
+                    )}
                     <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">Admin</p>
-                        <p className="text-xs text-gray-400 truncate">관리자</p>
+                        <p className="text-sm font-medium truncate">{user?.nickname || 'Admin'}</p>
+                        <p className="text-xs text-gray-400 truncate">{user?.email || '관리자'}</p>
                     </div>
                 </div>
             </div>

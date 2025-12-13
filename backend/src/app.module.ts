@@ -14,6 +14,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { EventModule } from './modules/event/event.module';
+import { PublicModule } from './modules/public/public.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './modules/auth/guards/roles.guard';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
@@ -44,6 +45,7 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
     ChatModule,
     UploadModule,
     EventModule,
+    PublicModule,
   ],
   controllers: [],
   providers: [

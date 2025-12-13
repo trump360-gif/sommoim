@@ -2,7 +2,7 @@
 
 import { useCallback, useState, useEffect } from 'react';
 import imageCompression from 'browser-image-compression';
-import { Upload, X, Image as ImageIcon, Link } from 'lucide-react';
+import { Upload, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // ================================
@@ -16,7 +16,6 @@ interface ImageUploadProps {
     maxWidth?: number;
     maxHeight?: number;
     maxSizeMB?: number;
-    allowUrlInput?: boolean;
 }
 
 // ================================
@@ -37,14 +36,11 @@ export function ImageUpload({
     maxWidth = DEFAULT_MAX_WIDTH,
     maxHeight = DEFAULT_MAX_HEIGHT,
     maxSizeMB = DEFAULT_MAX_SIZE_MB,
-    allowUrlInput = true,
 }: ImageUploadProps) {
     const [isDragging, setIsDragging] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<string>('');
     const [preview, setPreview] = useState<string | null>(value || null);
-    const [showUrlInput, setShowUrlInput] = useState(false);
-    const [urlInput, setUrlInput] = useState('');
 
     // ================================
     // Effects
@@ -182,15 +178,6 @@ export function ImageUpload({
         onRemove?.();
     };
 
-    const handleUrlSubmit = () => {
-        if (urlInput.trim()) {
-            setPreview(urlInput.trim());
-            onChange(urlInput.trim());
-            setShowUrlInput(false);
-            setUrlInput('');
-        }
-    };
-
     return (
         <div className={cn('relative', className)}>
             {preview ? (
@@ -206,35 +193,6 @@ export function ImageUpload({
                         className="absolute right-2 top-2 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
                     >
                         <X className="h-4 w-4" />
-                    </button>
-                </div>
-            ) : showUrlInput ? (
-                <div className="flex h-48 flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-4">
-                    <Link className="mb-3 h-8 w-8 text-gray-400" />
-                    <p className="mb-3 text-sm font-medium text-gray-700">이미지 URL 입력</p>
-                    <div className="flex w-full max-w-md gap-2">
-                        <input
-                            type="url"
-                            value={urlInput}
-                            onChange={(e) => setUrlInput(e.target.value)}
-                            placeholder="https://example.com/image.jpg"
-                            className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
-                            onKeyDown={(e) => e.key === 'Enter' && handleUrlSubmit()}
-                        />
-                        <button
-                            type="button"
-                            onClick={handleUrlSubmit}
-                            className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
-                        >
-                            확인
-                        </button>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() => setShowUrlInput(false)}
-                        className="mt-3 text-sm text-gray-500 hover:text-gray-700"
-                    >
-                        파일 업로드로 돌아가기
                     </button>
                 </div>
             ) : (
@@ -275,16 +233,6 @@ export function ImageUpload({
                             disabled={isUploading}
                         />
                     </label>
-                    {allowUrlInput && !isUploading && (
-                        <button
-                            type="button"
-                            onClick={(e) => { e.preventDefault(); setShowUrlInput(true); }}
-                            className="mt-3 flex items-center gap-1 text-sm text-gray-500 hover:text-primary-600"
-                        >
-                            <Link className="h-4 w-4" />
-                            URL로 이미지 추가
-                        </button>
-                    )}
                 </div>
             )}
         </div>

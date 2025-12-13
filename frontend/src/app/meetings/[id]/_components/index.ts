@@ -7,7 +7,7 @@ export { MeetingSidebar } from './meeting-sidebar';
 export { MeetingInfoTab } from './meeting-info-tab';
 export { MeetingReviewsTab } from './meeting-reviews-tab';
 export { ScheduleManager } from './schedule-manager';
-export { EventList } from './event-list';
+// EventList는 @/components/meeting/event-list에서 직접 import
 export { EventModal } from './event-modal';
 export { QrModal } from './qr-modal';
 export { ApplicationManager } from './application-manager';

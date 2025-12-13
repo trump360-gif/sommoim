@@ -5,10 +5,20 @@ import { useQuery } from '@tanstack/react-query';
 import { meetingsApi, RecommendedMeeting } from '@/lib/api/meetings';
 import { adminApi, type Banner, type CategoryEntity, type PageSection } from '@/lib/api/admin';
 import { MeetingCard } from '@/components/meeting/meeting-card';
-import { BannerCarousel, BannerCarouselSkeleton } from '@/components/home/BannerCarousel';
+import {
+    BannerCarousel,
+    BannerCarouselSkeleton,
+    HeroSection,
+    StatsSection,
+    TrendingSection,
+    RecentActivitySection,
+} from '@/components/home';
+import { statsApi } from '@/lib/api/stats';
+import type { PublicStats, RecentActivity } from '@/types/stats';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { Sparkles } from 'lucide-react';
+import { ScrollReveal, StaggerContainer, StaggerItem } from '@/components/animation';
 import type { Meeting, PaginatedResponse } from '@/types';
 
 // ================================
@@ -24,61 +34,9 @@ const DEFAULT_CATEGORIES = [
     { key: 'STUDY', label: '스터디', icon: '📚', color: 'bg-yellow-500' },
 ];
 
-interface HeroLayout {
-    subtitle?: string;
-    buttonText?: string;
-    buttonLink?: string;
-    secondButtonText?: string;
-    secondButtonLink?: string;
-    bgColor?: string;
-    bgColorEnd?: string;
-    bgImage?: string;
-}
-
 interface MeetingsLayout {
     sort?: 'popular' | 'latest';
     limit?: number;
-}
-
-// ================================
-// Section Components
-// ================================
-
-function HeroSection({ section }: { section: PageSection }) {
-    const heroLayout = (section.layoutJson || {}) as HeroLayout;
-
-    return (
-        <section
-            className="relative mx-auto max-w-7xl overflow-hidden rounded-3xl px-4 py-16 sm:px-6 lg:px-8"
-            style={{
-                background: heroLayout.bgImage
-                    ? `url(${heroLayout.bgImage}) center/cover`
-                    : `linear-gradient(135deg, ${heroLayout.bgColor || '#6366f1'} 0%, ${heroLayout.bgColorEnd || '#8b5cf6'} 100%)`,
-            }}
-        >
-            <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
-            <div className="relative z-10 mx-auto max-w-3xl text-center text-white">
-                <h1 className="mb-6 text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl">
-                    {section.title || '관심사가 같은 사람들과 함께해요'}
-                </h1>
-                <p className="mb-8 text-lg opacity-95 md:text-xl">
-                    {heroLayout.subtitle || '운동, 게임, 맛집, 여행... 다양한 모임에서 새로운 친구를 만나보세요'}
-                </p>
-                <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-                    <Link href={heroLayout.buttonLink || '/meetings'}>
-                        <Button className="w-full bg-white px-8 py-6 text-base font-semibold text-primary-600 shadow-lg transition-all hover:scale-105 hover:bg-gray-50 hover:shadow-xl sm:w-auto">
-                            {heroLayout.buttonText || '모임 찾아보기'}
-                        </Button>
-                    </Link>
-                    <Link href={heroLayout.secondButtonLink || '/meetings/create'}>
-                        <Button className="w-full border-2 border-white bg-transparent px-8 py-6 text-base font-semibold text-white shadow-lg transition-all hover:scale-105 hover:bg-white/20 sm:w-auto">
-                            {heroLayout.secondButtonText || '모임 만들기'}
-                        </Button>
-                    </Link>
-                </div>
-            </div>
-        </section>
-    );
 }
 
 function CategoriesSection({
@@ -89,7 +47,7 @@ function CategoriesSection({
     categories: Array<{ key: string; label: string; icon: string; color: string | null }>;
 }) {
     return (
-        <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <section id="categories" className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 scroll-mt-20">
             <h2 className="mb-8 text-3xl font-bold tracking-tight">{section.title || '카테고리'}</h2>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6">
                 {categories.map((cat) => {
@@ -128,9 +86,10 @@ function MeetingsSection({
     const subtitle = sortType === 'popular'
         ? '지금 가장 핫한 모임을 만나보세요'
         : '새롭게 시작된 모임에 참여해보세요';
+    const sectionId = sortType === 'popular' ? 'popular-meetings' : 'latest-meetings';
 
     return (
-        <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <section id={sectionId} className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 scroll-mt-20">
             <div className="mb-8 flex items-center justify-between">
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight">{section.title || '모임'}</h2>
@@ -253,6 +212,22 @@ export default function HomePage() {
         queryFn: () => meetingsApi.getAll({ limit: 4, sort: 'popular', status: 'RECRUITING' }),
     });
 
+    // 새로운 데이터 쿼리들
+    const { data: publicStats, isLoading: statsLoading } = useQuery<PublicStats>({
+        queryKey: ['public', 'stats'],
+        queryFn: () => statsApi.getPublicStats(),
+    });
+
+    const { data: trendingMeetings, isLoading: trendingLoading } = useQuery<PaginatedResponse<Meeting>>({
+        queryKey: ['meetings', 'trending'],
+        queryFn: () => meetingsApi.getAll({ limit: 8, sort: 'popular', status: 'RECRUITING' }),
+    });
+
+    const { data: recentActivities, isLoading: activitiesLoading } = useQuery<RecentActivity[]>({
+        queryKey: ['public', 'recent-activities'],
+        queryFn: () => statsApi.getRecentActivities(8),
+    });
+
     const categories = adminCategories?.length
         ? adminCategories.map((cat) => ({
             key: cat.name.toUpperCase(),
@@ -306,6 +281,15 @@ export default function HomePage() {
             {isAuthenticated && recommendedMeetings && recommendedMeetings.length > 0 && (
                 <RecommendedSection meetings={recommendedMeetings} />
             )}
+
+            {/* 통계 섹션 */}
+            <StatsSection stats={publicStats} isLoading={statsLoading} />
+
+            {/* 트렌딩 모임 섹션 */}
+            <TrendingSection meetings={trendingMeetings?.data} isLoading={trendingLoading} />
+
+            {/* 최근 활동 섹션 */}
+            <RecentActivitySection activities={recentActivities} isLoading={activitiesLoading} />
         </div>
     );
 }

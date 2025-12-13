@@ -7,7 +7,7 @@
 import Image from 'next/image';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { ScheduleManager } from './schedule-manager';
-import { EventList } from './event-list';
+import { EventList } from '@/components/meeting/event-list';
 import type { Meeting } from '@/types';
 
 interface MeetingInfoTabProps {
@@ -30,7 +30,7 @@ export function MeetingInfoTab({ meeting, meetingId, isHost, isMember }: Meeting
       </div>
 
       {/* Events - 정모/번개 */}
-      <EventList meetingId={meetingId} isHost={isHost} isMember={isMember} />
+      <EventList meetingId={meetingId} isHost={isHost} isParticipant={isMember} />
 
       {/* Schedules - 기존 일정 관리 */}
       <ScheduleManager

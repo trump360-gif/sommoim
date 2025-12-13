@@ -3,11 +3,11 @@
 // ================================
 // Imports
 // ================================
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { usersApi } from '@/lib/api/users';
+import { usersApi, CalendarEvent } from '@/lib/api/users';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { SimpleTabs as Tabs } from '@/components/ui/tabs';
@@ -15,27 +15,10 @@ import {
   Calendar as CalendarIcon,
   Clock,
   MapPin,
-  Users,
-  Zap,
   ChevronLeft,
   ChevronRight,
   CheckCircle2,
 } from 'lucide-react';
-
-// ================================
-// Types
-// ================================
-interface MyEvent {
-  id: string;
-  meetingId: string;
-  meetingTitle: string;
-  type: 'REGULAR' | 'LIGHTNING';
-  title: string;
-  date: string;
-  endTime?: string;
-  location?: string;
-  status: 'PENDING' | 'CONFIRMED' | 'ATTENDED' | 'DECLINED' | 'NO_SHOW';
-}
 
 // ================================
 // Constants
@@ -83,49 +66,25 @@ export default function MyCalendarPage() {
   const [activeTab, setActiveTab] = useState('upcoming');
   const [currentDate, setCurrentDate] = useState(new Date());
 
-  // Fetch my events (using myMeetings as proxy - would need dedicated API)
-  const { data: myMeetingsData, isLoading } = useQuery({
-    queryKey: ['my-meetings'],
-    queryFn: () => usersApi.getMyMeetings(),
+  // Calculate date range for API query (3 months before and after current view)
+  const dateRange = useMemo(() => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const startDate = new Date(year, month - 3, 1).toISOString();
+    const endDate = new Date(year, month + 4, 0).toISOString();
+    return { startDate, endDate };
+  }, [currentDate]);
+
+  // Fetch calendar events from API
+  const { data: calendarEvents = [], isLoading } = useQuery({
+    queryKey: ['my-calendar', dateRange.startDate, dateRange.endDate],
+    queryFn: () => usersApi.getMyCalendar(dateRange.startDate, dateRange.endDate),
     enabled: isAuthenticated,
   });
 
-  // Mock events for demo (in real app, fetch from dedicated API)
-  const mockEvents: MyEvent[] = [
-    {
-      id: '1',
-      meetingId: 'meeting1',
-      meetingTitle: '주말 등산 모임',
-      type: 'REGULAR',
-      title: '12월 정기 등산',
-      date: new Date(Date.now() + 86400000 * 3).toISOString(),
-      location: '북한산 입구',
-      status: 'CONFIRMED',
-    },
-    {
-      id: '2',
-      meetingId: 'meeting2',
-      meetingTitle: '보드게임 동호회',
-      type: 'LIGHTNING',
-      title: '번개 보드게임',
-      date: new Date(Date.now() + 86400000 * 7).toISOString(),
-      location: '홍대 보드게임카페',
-      status: 'CONFIRMED',
-    },
-    {
-      id: '3',
-      meetingId: 'meeting1',
-      meetingTitle: '주말 등산 모임',
-      type: 'REGULAR',
-      title: '11월 정기 등산',
-      date: new Date(Date.now() - 86400000 * 10).toISOString(),
-      location: '관악산',
-      status: 'ATTENDED',
-    },
-  ];
-
-  const upcomingEvents = mockEvents.filter((e) => isUpcoming(e.date));
-  const pastEvents = mockEvents.filter((e) => !isUpcoming(e.date));
+  // Filter events based on tab
+  const upcomingEvents = calendarEvents.filter((e) => isUpcoming(e.date));
+  const pastEvents = calendarEvents.filter((e) => !isUpcoming(e.date));
   const displayEvents = activeTab === 'upcoming' ? upcomingEvents : pastEvents;
 
   // Calendar navigation
@@ -150,7 +109,7 @@ export default function MyCalendarPage() {
   const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
 
   // Events on calendar
-  const eventsInMonth = mockEvents.filter((e) => {
+  const eventsInMonth = calendarEvents.filter((e) => {
     const eventDate = new Date(e.date);
     return eventDate.getFullYear() === year && eventDate.getMonth() === month;
   });
@@ -247,11 +206,7 @@ export default function MyCalendarPage() {
                       {dayEvents.slice(0, 2).map((event) => (
                         <div
                           key={event.id}
-                          className={`text-xs truncate rounded px-1 py-0.5 ${
-                            event.type === 'LIGHTNING'
-                              ? 'bg-amber-100 text-amber-700'
-                              : 'bg-blue-100 text-blue-700'
-                          }`}
+                          className="text-xs truncate rounded px-1 py-0.5 bg-blue-100 text-blue-700"
                         >
                           {event.title}
                         </div>
@@ -289,11 +244,12 @@ export default function MyCalendarPage() {
           <div className="space-y-3">
             {displayEvents.map((event) => {
               const dateInfo = formatEventDate(event.date);
+              const isPast = !isUpcoming(event.date);
               return (
                 <Card
                   key={event.id}
                   className="cursor-pointer transition-shadow hover:shadow-md"
-                  onClick={() => router.push(`/meetings/${event.meetingId}`)}
+                  onClick={() => router.push(`/meetings/${event.meeting.id}`)}
                 >
                   <CardContent className="p-4">
                     <div className="flex gap-4">
@@ -307,27 +263,20 @@ export default function MyCalendarPage() {
                       {/* Content */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          {event.type === 'LIGHTNING' ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
-                              <Zap className="h-3 w-3" />
-                              번개
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
-                              <CalendarIcon className="h-3 w-3" />
-                              정모
-                            </span>
-                          )}
-                          {event.status === 'ATTENDED' && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+                            <CalendarIcon className="h-3 w-3" />
+                            {event.meeting.category}
+                          </span>
+                          {isPast && event.attendanceStatus === 'ATTENDING' && (
                             <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
                               <CheckCircle2 className="h-3 w-3" />
-                              출석완료
+                              참석완료
                             </span>
                           )}
                         </div>
 
                         <h3 className="font-semibold text-gray-900">{event.title}</h3>
-                        <p className="text-sm text-gray-500">{event.meetingTitle}</p>
+                        <p className="text-sm text-gray-500">{event.meeting.title}</p>
 
                         <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-gray-500">
                           <span className="flex items-center gap-1">

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { NotificationDropdown } from './notification-dropdown';
+import { MobileNav } from './MobileNav';
 import {
   Calendar,
   Bookmark,
@@ -16,6 +17,7 @@ import {
   Bell,
   Shield,
   ChevronDown,
+  Menu,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -71,6 +73,7 @@ const myMenuSections: MegaMenuSection[] = [
 export function Header() {
   const { user, isAuthenticated, logout } = useAuth();
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   return (
     <header className="fixed left-0 right-0 top-0 z-50 border-b border-gray-200/80 bg-white/80 backdrop-blur-md transition-all duration-300 supports-[backdrop-filter]:bg-white/60">
@@ -114,12 +117,12 @@ export function Header() {
 
               <NotificationDropdown />
 
-              {/* My Menu Trigger */}
+              {/* My Menu Trigger - Desktop */}
               <button
                 onMouseEnter={() => setIsMegaMenuOpen(true)}
                 onMouseLeave={() => setIsMegaMenuOpen(false)}
                 className={cn(
-                  'flex items-center gap-2 rounded-full border bg-white px-3 py-1.5 text-sm font-medium shadow-sm transition-all',
+                  'hidden md:flex items-center gap-2 rounded-full border bg-white px-3 py-1.5 text-sm font-medium shadow-sm transition-all',
                   isMegaMenuOpen
                     ? 'border-primary-300 text-primary-700 shadow-md'
                     : 'border-gray-200 text-gray-700 hover:border-gray-300 hover:shadow-md'
@@ -129,22 +132,40 @@ export function Header() {
                 <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', isMegaMenuOpen && 'rotate-180')} />
               </button>
 
-              <Button variant="ghost" size="sm" onClick={logout} className="text-gray-500 hover:text-gray-900">
+              <Button variant="ghost" size="sm" onClick={logout} className="hidden md:flex text-gray-500 hover:text-gray-900">
                 <LogOut className="h-4 w-4" />
               </Button>
+
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setIsMobileNavOpen(true)}
+                className="md:hidden flex items-center justify-center h-10 w-10 rounded-full hover:bg-gray-100 transition-colors"
+                aria-label="메뉴 열기"
+              >
+                <Menu className="h-5 w-5 text-gray-700" />
+              </button>
             </>
           ) : (
             <>
-              <Link href="/auth/login">
+              <Link href="/auth/login" className="hidden sm:block">
                 <Button variant="ghost" size="sm" className="font-medium text-gray-600 hover:text-gray-900">
                   로그인
                 </Button>
               </Link>
-              <Link href="/auth/register">
+              <Link href="/auth/register" className="hidden sm:block">
                 <Button size="sm" className="bg-primary-600 font-medium text-white shadow-sm hover:bg-primary-700">
                   회원가입
                 </Button>
               </Link>
+
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setIsMobileNavOpen(true)}
+                className="sm:hidden flex items-center justify-center h-10 w-10 rounded-full hover:bg-gray-100 transition-colors"
+                aria-label="메뉴 열기"
+              >
+                <Menu className="h-5 w-5 text-gray-700" />
+              </button>
             </>
           )}
         </div>
@@ -214,6 +235,9 @@ export function Header() {
           </div>
         </div>
       )}
+
+      {/* Mobile Navigation */}
+      <MobileNav isOpen={isMobileNavOpen} onClose={() => setIsMobileNavOpen(false)} />
     </header>
   );
 }

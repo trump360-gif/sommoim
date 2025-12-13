@@ -3,7 +3,7 @@
 // ================================
 // Imports
 // ================================
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,9 +19,9 @@ import {
 } from 'lucide-react';
 
 // ================================
-// Component
+// Inner Component (uses useSearchParams)
 // ================================
-export default function EventCheckInPage() {
+function EventCheckInContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
@@ -49,7 +49,7 @@ export default function EventCheckInPage() {
     if (qrCode && isAuthenticated && !checkInMutation.isPending && !checkInMutation.isSuccess && !checkInMutation.isError) {
       checkInMutation.mutate(qrCode);
     }
-  }, [qrCode, isAuthenticated]);
+  }, [qrCode, isAuthenticated, checkInMutation]);
 
   // Handle manual code submission
   const handleManualSubmit = (e: React.FormEvent) => {
@@ -162,5 +162,27 @@ export default function EventCheckInPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+// ================================
+// Loading Fallback
+// ================================
+function CheckInLoading() {
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+    </div>
+  );
+}
+
+// ================================
+// Main Component (with Suspense boundary)
+// ================================
+export default function EventCheckInPage() {
+  return (
+    <Suspense fallback={<CheckInLoading />}>
+      <EventCheckInContent />
+    </Suspense>
   );
 }

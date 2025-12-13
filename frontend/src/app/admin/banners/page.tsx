@@ -75,8 +75,8 @@ export default function AdminBannersPage() {
   const buildBannerData = (isUpdate = false): Omit<Banner, 'id' | 'clickCount' | 'createdAt' | 'updatedAt'> => ({
     order: formData.order,
     isActive: formData.isActive,
-    // 수정 시 이미지가 비어있으면 null로 보내서 명시적으로 삭제
-    imageUrl: formData.imageUrl || (isUpdate ? null : undefined),
+    // 수정 시 이미지가 비어있으면 빈 문자열로 보내서 명시적으로 삭제
+    imageUrl: formData.imageUrl || (isUpdate ? '' : undefined),
     linkUrl: formData.linkUrl || undefined,
     title: formData.title || undefined,
     subtitle: formData.subtitle || undefined,

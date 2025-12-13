@@ -3,26 +3,11 @@ import { getSampleMeetingImage } from '@/lib/sample-images';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Meeting } from '@/types/meeting';
+import { categoryLabels, statusLabels } from '@/shared';
 
 interface MeetingCardProps {
   meeting: Meeting;
 }
-
-const categoryLabels: Record<string, string> = {
-  SPORTS: '스포츠',
-  GAMES: '게임',
-  FOOD: '음식',
-  CULTURE: '문화',
-  TRAVEL: '여행',
-  STUDY: '스터디',
-};
-
-const statusLabels: Record<string, string> = {
-  RECRUITING: '모집중',
-  ONGOING: '진행중',
-  COMPLETED: '완료',
-  CANCELLED: '취소됨',
-};
 
 export function MeetingCard({ meeting }: MeetingCardProps) {
   const participantCount = meeting._count?.participants ?? 0;

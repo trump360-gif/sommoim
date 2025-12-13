@@ -8,17 +8,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Participant } from '@/types';
+import { PARTICIPANT_STATUS } from '@/shared';
 
 type StatusFilter = 'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'KICKED';
 
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  PENDING: { label: '대기중', color: 'bg-yellow-100 text-yellow-800' },
-  APPROVED: { label: '승인됨', color: 'bg-green-100 text-green-800' },
-  REJECTED: { label: '거절됨', color: 'bg-red-100 text-red-800' },
-  CANCELLED: { label: '취소됨', color: 'bg-gray-100 text-gray-800' },
-  KICKED: { label: '강퇴됨', color: 'bg-red-100 text-red-800' },
-  ATTENDED: { label: '참석함', color: 'bg-blue-100 text-blue-800' },
-};
+const STATUS_LABELS = PARTICIPANT_STATUS;
 
 export default function ParticipantsPage({ params }: { params: { id: string } }) {
   const { id } = params;

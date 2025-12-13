@@ -1,8 +1,8 @@
-# 소모임 플랫폼 (Sommoim) - TRD v3.9
+# 소모임 플랫폼 (Sommoim) - TRD v4.0
 
-**작성일:** 2025-12-10
-**버전:** 3.9
-**상태:** 개발 진행 중 (Phase 1-8 완료)
+**작성일:** 2025-12-13
+**버전:** 4.0
+**상태:** 개발 진행 중 (Phase 1-9 완료)
 
 ---
 
@@ -24,6 +24,7 @@
 | Sonner | 2.x | 토스트 알림 | ✅ 구현 |
 | Lucide React | - | 아이콘 | ✅ 구현 |
 | browser-image-compression | 2.x | 클라이언트 이미지 압축 | ✅ 구현 |
+| Framer Motion | 11.x | 애니메이션 | ✅ 구현 |
 
 ### 1.2 백엔드
 
@@ -831,14 +832,20 @@ socket.on('message:new', handleNewMessage);
 - ✅ 관리자 시스템 설정 (일반/알림/보안/이메일/DB)
 - ✅ 채팅 API 경로 정규화
 
-### Phase 9: UI/UX 개선 (진행중)
+### Phase 9: UI/UX 개선 ✅ 완료
 - ✅ 메인 페이지 섹션 순서 동적 반영
 - ✅ 관리자 사이드바 한글화 (ADMIN → 관리자)
 - ✅ 배너 이미지 제거 시 null 처리 로직 수정
 - ✅ 이미지 업로더 URL 직접 입력 기능 추가
-- 🔜 히어로 배너 UI 개선
-- 🔜 배너 슬라이더 교체/확인
-- 🔜 섹션별 스타일 커스터마이징
+- ✅ Framer Motion 애니메이션 컴포넌트 (FadeIn, SlideUp, ScrollReveal, CountUp)
+- ✅ 모바일 네비게이션 (Sheet + MobileNav)
+- ✅ 히어로 섹션 분리 및 배경 애니메이션
+- ✅ 통계 섹션 (StatsSection) - 카운트업 애니메이션
+- ✅ 인기 모임 섹션 (TrendingSection)
+- ✅ 최근 활동 섹션 (RecentActivitySection)
+- ✅ 사이드바 섹션별 동적 네비게이션 (API 연동)
+- ✅ 코드 리팩토링 (shared 모듈, 컴포넌트 분리)
+- ✅ 마이페이지 확장 (내 모임, 캘린더 API 연동, 알림 설정)
 
 ### Phase 10: 폴리싱 🔜 예정
 - 🔜 Cloudflare R2 스토리지 연동
@@ -912,8 +919,13 @@ NEXT_PUBLIC_API_URL=http://localhost:3000/api
 | 모임 상세 | `/meetings/[id]` | ✅ 완료 |
 | 모임 수정 | `/meetings/[id]/edit` | ✅ 완료 |
 | 모임 채팅 | `/meetings/[id]/chat` | ✅ 완료 |
-| 내 프로필 | `/profile` | ✅ 완료 |
-| 프로필 수정 | `/profile/edit` | ✅ 완료 |
+| 마이페이지 | `/mypage` | ✅ 완료 |
+| 프로필 수정 | `/mypage/edit` | ✅ 완료 |
+| 내 모임 | `/mypage/meetings` | ✅ 완료 |
+| 내 일정 | `/mypage/calendar` | ✅ 완료 |
+| 팔로워/팔로잉 | `/mypage/followers` | ✅ 완료 |
+| 알림 설정 | `/mypage/notifications` | ✅ 완료 |
+| 차단 관리 | `/mypage/blocked` | ✅ 완료 |
 | 타인 프로필 | `/profile/[id]` | ✅ 완료 |
 | 알림 | `/notifications` | ✅ 완료 |
 | 북마크 | `/bookmarks` | ✅ 완료 |

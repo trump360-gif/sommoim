@@ -6,6 +6,7 @@ import { meetingsApi, Application } from '@/lib/api/meetings';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Check, X, Users, ChevronDown, ChevronUp } from 'lucide-react';
+import { PARTICIPANT_STATUS } from '@/shared';
 
 // ================================
 // Types
@@ -16,13 +17,8 @@ interface ApplicationManagerProps {
   isHost: boolean;
 }
 
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  PENDING: { label: '대기 중', color: 'bg-yellow-100 text-yellow-800' },
-  APPROVED: { label: '승인됨', color: 'bg-green-100 text-green-800' },
-  REJECTED: { label: '거절됨', color: 'bg-red-100 text-red-800' },
-  CANCELLED: { label: '취소됨', color: 'bg-gray-100 text-gray-800' },
-  KICKED: { label: '추방됨', color: 'bg-red-100 text-red-800' },
-};
+// 호환성을 위한 로컬 변환 (기존 코드 동작 유지)
+const STATUS_LABELS = PARTICIPANT_STATUS;
 
 // ================================
 // Component
@@ -114,7 +110,7 @@ export function ApplicationManager({ meetingId, isHost }: ApplicationManagerProp
     }
   };
 
-  const formatDate = (dateStr: string) => {
+  const formatDateLocal = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('ko-KR', {
       year: 'numeric',
       month: 'short',
@@ -219,7 +215,7 @@ export function ApplicationManager({ meetingId, isHost }: ApplicationManagerProp
                         {STATUS_LABELS[app.status].label}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-500">{formatDate(app.createdAt)}</p>
+                    <p className="text-sm text-gray-500">{formatDateLocal(app.createdAt)}</p>
                     {app.introduction && (
                       <p className="mt-1 text-sm text-gray-700">{app.introduction}</p>
                     )}

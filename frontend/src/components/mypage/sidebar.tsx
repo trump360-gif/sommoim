@@ -62,8 +62,7 @@ const navSections: NavSection[] = [
   {
     title: '소셜',
     items: [
-      { label: '팔로워', href: '/mypage/followers', icon: Heart },
-      { label: '팔로잉', href: '/mypage/following', icon: Users },
+      { label: '팔로워/팔로잉', href: '/mypage/followers', icon: Heart },
     ],
   },
   {

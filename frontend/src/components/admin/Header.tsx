@@ -1,7 +1,9 @@
 'use client';
 
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import {
     ChevronRight,
     Menu,
@@ -19,6 +21,8 @@ import {
     type LucideIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { adminApi } from '@/lib/api/admin';
 
 interface BreadcrumbItem {
     label: string;
@@ -104,6 +108,26 @@ export function AdminHeader({ onMenuClick }: { onMenuClick?: () => void }) {
     );
 }
 
+// ================================
+// Types & Interfaces
+// ================================
+
+interface NavItem {
+    label: string;
+    href: string;
+    icon: LucideIcon;
+    badgeKey?: string;
+}
+
+interface NavSection {
+    title: string;
+    items: NavItem[];
+}
+
+// ================================
+// Mobile Sidebar Component
+// ================================
+
 export function MobileSidebar({
     isOpen,
     onClose
@@ -112,6 +136,27 @@ export function MobileSidebar({
     onClose: () => void;
 }) {
     const pathname = usePathname();
+    const { user } = useAuth();
+
+    // pathname 변경 시 자동으로 사이드바 닫기
+    useEffect(() => {
+        if (isOpen) {
+            onClose();
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pathname]);
+
+    // 대시보드 통계 가져오기 (배지용)
+    const { data: dashboardStats } = useQuery({
+        queryKey: ['admin', 'dashboard'],
+        queryFn: () => adminApi.getDashboard(),
+        refetchInterval: 60000,
+    });
+
+    const getBadgeValue = (key?: string): number | undefined => {
+        if (!key || !dashboardStats) return undefined;
+        return (dashboardStats as unknown as Record<string, number>)[key];
+    };
 
     const navSections: NavSection[] = [
         {
@@ -120,7 +165,7 @@ export function MobileSidebar({
                 { label: '대시보드', href: '/admin', icon: LayoutDashboard },
                 { label: '사용자', href: '/admin/users', icon: Users },
                 { label: '모임', href: '/admin/meetings', icon: Calendar },
-                { label: '신고', href: '/admin/reports', icon: Flag },
+                { label: '신고', href: '/admin/reports', icon: Flag, badgeKey: 'pendingReports' },
             ],
         },
         {
@@ -190,12 +235,12 @@ export function MobileSidebar({
                                 {section.items.map((item) => {
                                     const Icon = item.icon;
                                     const isActive = pathname === item.href;
+                                    const badgeValue = getBadgeValue(item.badgeKey);
 
                                     return (
                                         <Link
                                             key={item.href}
                                             href={item.href}
-                                            onClick={onClose}
                                             className={cn(
                                                 'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                                                 isActive
@@ -205,7 +250,13 @@ export function MobileSidebar({
                                         >
                                             <Icon className="h-5 w-5" />
                                             <span>{item.label}</span>
-                                            {isActive && (
+                                            {/* 배지 표시 */}
+                                            {badgeValue !== undefined && badgeValue > 0 && (
+                                                <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-bold text-white">
+                                                    {badgeValue > 99 ? '99+' : badgeValue}
+                                                </span>
+                                            )}
+                                            {isActive && !badgeValue && (
                                                 <ChevronRight className="ml-auto h-4 w-4" />
                                             )}
                                         </Link>
@@ -218,15 +269,4 @@ export function MobileSidebar({
             </aside>
         </>
     );
-}
-
-interface NavItem {
-    label: string;
-    href: string;
-    icon: LucideIcon;
-}
-
-interface NavSection {
-    title: string;
-    items: NavItem[];
 }

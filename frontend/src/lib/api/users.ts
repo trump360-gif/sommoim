@@ -111,4 +111,27 @@ export const usersApi = {
   // 신고
   reportUser: (id: string, reason: string, description?: string) =>
     api.post(`/users/${id}/report`, { reason, description }),
+
+  // 캘린더
+  getMyCalendar: (startDate?: string, endDate?: string) =>
+    api.get<CalendarEvent[]>('/users/me/calendar', { params: { startDate, endDate } }),
 };
+
+// ================================
+// Calendar Types
+// ================================
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  description?: string;
+  date: string;
+  endTime?: string;
+  location?: string;
+  meeting: {
+    id: string;
+    title: string;
+    category: string;
+    imageUrl?: string;
+  };
+  attendanceStatus: 'ATTENDING' | 'NOT_ATTENDING' | 'MAYBE';
+}

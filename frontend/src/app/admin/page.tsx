@@ -61,22 +61,9 @@ const homepageActions: QuickAction[] = [
 ];
 
 // ================================
-// Helper Functions
+// Helper Functions (imported from shared)
 // ================================
-function formatDate(dateString: string) {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diff = now.getTime() - date.getTime();
-  const minutes = Math.floor(diff / (1000 * 60));
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-
-  if (minutes < 1) return '방금 전';
-  if (minutes < 60) return `${minutes}분 전`;
-  if (hours < 24) return `${hours}시간 전`;
-  if (days < 7) return `${days}일 전`;
-  return date.toLocaleDateString('ko-KR');
-}
+import { formatRelativeTime, REPORT_STATUS } from '@/shared';
 
 // ================================
 // Sub Components
@@ -134,18 +121,7 @@ function QuickActionCard({ action, onClick }: { action: QuickAction; onClick: ()
 }
 
 function RecentReportItem({ report }: { report: any }) {
-  const statusColors: Record<string, string> = {
-    PENDING: 'bg-yellow-100 text-yellow-700',
-    PROCESSING: 'bg-blue-100 text-blue-700',
-    RESOLVED: 'bg-green-100 text-green-700',
-    REJECTED: 'bg-gray-100 text-gray-700',
-  };
-  const statusLabels: Record<string, string> = {
-    PENDING: '대기',
-    PROCESSING: '처리중',
-    RESOLVED: '해결',
-    REJECTED: '반려',
-  };
+  const status = REPORT_STATUS[report.status] || { label: report.status, color: 'bg-gray-100 text-gray-700' };
 
   return (
     <div className="flex items-center justify-between border-b border-gray-100 py-3 last:border-0">
@@ -155,11 +131,11 @@ function RecentReportItem({ report }: { report: any }) {
           <p className="text-sm font-medium text-gray-900">
             {report.type === 'USER' ? '사용자 신고' : '모임 신고'}
           </p>
-          <p className="text-xs text-gray-500">{formatDate(report.createdAt)}</p>
+          <p className="text-xs text-gray-500">{formatRelativeTime(report.createdAt)}</p>
         </div>
       </div>
-      <span className={`rounded-full px-2 py-1 text-xs font-medium ${statusColors[report.status]}`}>
-        {statusLabels[report.status]}
+      <span className={`rounded-full px-2 py-1 text-xs font-medium ${status.color}`}>
+        {status.label}
       </span>
     </div>
   );

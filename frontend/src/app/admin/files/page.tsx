@@ -297,11 +297,14 @@ export default function AdminFilesPage() {
                     <td className="p-3 text-sm text-gray-500">{formatDate(file.createdAt)}</td>
                     <td className="p-3">
                       <div className="flex gap-1">
-                        <Button size="sm" variant="ghost" asChild>
-                          <a href={file.url} target="_blank" rel="noopener noreferrer">
-                            <Download className="h-4 w-4" />
-                          </a>
-                        </Button>
+                        <a
+                          href={file.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium hover:bg-gray-100"
+                        >
+                          <Download className="h-4 w-4" />
+                        </a>
                         <Button size="sm" variant="ghost" onClick={() => handleDeleteFile(file.id)}>
                           <Trash2 className="h-4 w-4 text-red-500" />
                         </Button>

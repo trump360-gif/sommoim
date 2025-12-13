@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
 import { SimpleTabs as Tabs } from '@/components/ui/tabs';
 import type { PaginatedResponse } from '@/types';
+import { REPORT_STATUS } from '@/shared';
 
 const STATUS_TABS = [
   { key: 'all', label: '전체' },
@@ -139,10 +140,6 @@ function TypeBadge({ type }: { type: string }) {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    PENDING: 'bg-yellow-100 text-yellow-700', PROCESSING: 'bg-blue-100 text-blue-700',
-    RESOLVED: 'bg-green-100 text-green-700', REJECTED: 'bg-gray-100 text-gray-700',
-  };
-  const labels: Record<string, string> = { PENDING: '대기중', PROCESSING: '처리중', RESOLVED: '해결됨', REJECTED: '반려됨' };
-  return <span className={`rounded-full px-2 py-1 text-xs ${styles[status]}`}>{labels[status]}</span>;
+  const statusInfo = REPORT_STATUS[status] || { label: status, color: 'bg-gray-100 text-gray-700' };
+  return <span className={`rounded-full px-2 py-1 text-xs ${statusInfo.color}`}>{statusInfo.label}</span>;
 }
